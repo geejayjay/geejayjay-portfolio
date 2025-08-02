@@ -1,0 +1,413 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+  */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 176 26% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 176 26% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 176 26% 18%;
+
+    --primary: 176 26% 18%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 176 50% 95%;
+    --secondary-foreground: 176 26% 18%;
+
+    --muted: 176 20% 96%;
+    --muted-foreground: 176 10% 45%;
+
+    --accent: 9 50% 58%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 176 15% 92%;
+    --input: 176 15% 92%;
+    --ring: 176 26% 18%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 176 26% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 176 26% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 176 26% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 176 26% 18%;
+
+    --secondary: 176 25% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 176 25% 15%;
+    --muted-foreground: 176 10% 65%;
+
+    --accent: 9 50% 58%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 176 25% 15%;
+    --input: 176 25% 15%;
+    --ring: 9 50% 58%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Sketchy paint effects */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sketchy-border {
+  border-radius: 50%;
+  position: relative;
+}
+
+.sketchy-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(45deg, #CF6C58, #D3A658, #CF6C58);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: exclude;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sketchy-line {
+  filter: url(#roughPaper);
+  stroke-dasharray: 5,3;
+  animation: dash 2s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+.sketchy-text {
+  position: relative;
+  filter: drop-shadow(1px 1px 0px rgba(207, 108, 88, 0.1));
+}
+
+.sketchy-text::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #CF6C58, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 1px;
+}
+
+.sketchy-text:hover::after {
+  opacity: 0.5;
+  animation: underlineSketch 0.5s ease-out;
+}
+
+@keyframes underlineSketch {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.sketchy-button {
+  position: relative;
+  border: 2px solid transparent;
+  background: linear-gradient(#CF6C58, #CF6C58) padding-box,
+              linear-gradient(45deg, #CF6C58, #D3A658) border-box;
+  border-radius: 8px;
+  filter: drop-shadow(2px 2px 4px rgba(207, 108, 88, 0.3));
+}
+
+.sketchy-button::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 10px;
+  padding: 1px;
+  background: linear-gradient(45deg, #CF6C58, #D3A658, #CF6C58);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: exclude;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sketchy-button:hover::before {
+  opacity: 0.7;
+  animation: buttonGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes buttonGlow {
+  0% {
+    filter: blur(2px);
+  }
+  100% {
+    filter: blur(6px);
+  }
+}
+
+/* Organic, imperfect circle */
+.organic-circle {
+  clip-path: polygon(
+    50% 0%,
+    61% 4%,
+    78% 8%,
+    89% 19%,
+    96% 35%,
+    98% 52%,
+    94% 68%,
+    85% 82%,
+    72% 92%,
+    55% 97%,
+    38% 94%,
+    23% 87%,
+    12% 76%,
+    4% 61%,
+    1% 44%,
+    3% 27%,
+    11% 13%,
+    25% 4%,
+    42% 1%
+  );
+  position: relative;
+}
+
+.organic-circle::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  clip-path: polygon(
+    50% 0%,
+    61% 4%,
+    78% 8%,
+    89% 19%,
+    96% 35%,
+    98% 52%,
+    94% 68%,
+    85% 82%,
+    72% 92%,
+    55% 97%,
+    38% 94%,
+    23% 87%,
+    12% 76%,
+    4% 61%,
+    1% 44%,
+    3% 27%,
+    11% 13%,
+    25% 4%,
+    42% 1%
+  );
+  background: rgba(207, 108, 88, 0.1);
+  opacity: 0.3;
+}
+
+/* Paint splash effects */
+.paint-splash {
+  position: relative;
+}
+
+.paint-splash::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, #f97316, transparent);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: splash 2s ease-in-out infinite;
+}
+
+@keyframes splash {
+  0%, 100% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.6;
+  }
+}
+
+/* Sketchy card effects */
+.sketchy-card {
+  position: relative;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fafafa, #f3f4f6);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  filter: drop-shadow(3px 3px 6px rgba(249, 115, 22, 0.1));
+  transition: all 0.3s ease;
+}
+
+.sketchy-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 12px;
+  padding: 2px;
+  background: linear-gradient(45deg, #f97316, #eab308, #f97316, #f59e0b);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: exclude;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0.3;
+}
+
+.sketchy-card:hover {
+  transform: translateY(-2px) rotate(0.5deg);
+  filter: drop-shadow(5px 5px 12px rgba(249, 115, 22, 0.2));
+}
+
+.sketchy-card:hover::before {
+  opacity: 0.6;
+  animation: cardGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes cardGlow {
+  0% {
+    background: linear-gradient(45deg, #CF6C58, #D3A658, #CF6C58, #2C4848);
+  }
+  100% {
+    background: linear-gradient(45deg, #2C4848, #CF6C58, #D3A658, #CF6C58);
+  }
+}
+
+/* Rough paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(circle at 20% 50%, transparent 20%, rgba(207, 108, 88, 0.03) 21%, rgba(207, 108, 88, 0.03) 34%, transparent 35%),
+    linear-gradient(0deg, transparent 24%, rgba(207, 108, 88, 0.02) 25%, rgba(207, 108, 88, 0.02) 26%, transparent 27%, transparent 74%, rgba(207, 108, 88, 0.02) 75%, rgba(207, 108, 88, 0.02) 76%, transparent 77%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+/* Apply sketchy effects to cards automatically */
+.bg-gray-50.rounded-lg.border,
+.bg-white.rounded-lg.border {
+  @apply sketchy-card;
+}
+
+/* Section titles with paint effects */
+h1, h2 {
+  position: relative;
+  filter: drop-shadow(2px 2px 0px rgba(249, 115, 22, 0.1));
+}
+
+h1::after, h2::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #CF6C58, #D3A658, #CF6C58, transparent);
+  opacity: 0.3;
+  border-radius: 2px;
+  animation: titleUnderline 3s ease-in-out infinite;
+}
+
+@keyframes titleUnderline {
+  0%, 100% {
+    transform: scaleX(0.8);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 0.4;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.animate-fade-in {
+  animation-name: fade-in;
+}
