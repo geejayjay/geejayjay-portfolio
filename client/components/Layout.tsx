@@ -15,7 +15,7 @@ const navLinks = [
 
 const socialLinks = [
   {
-    href: "https://linkedin.com",
+    href: "https://www.linkedin.com/in/jason-jay-gurang-b03668183/",
     label: "LinkedIn",
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -24,7 +24,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "https://instagram.com",
+    href: "https://www.instagram.com/geejayjay13/",
     label: "Instagram",
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "https://facebook.com",
+    href: "https://www.facebook.com/jason.jay.gurang.2024",
     label: "Facebook",
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
