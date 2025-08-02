@@ -8,8 +8,9 @@ export default function HeroSection() {
 
   const handleDownload = () => {
     toast({
+      variant: "default",
       title: "Download started",
-      description: "Your resume is being downloaded.",
+      description: "Resume is being downloaded...",
     });
 
     const link = document.createElement("a");
