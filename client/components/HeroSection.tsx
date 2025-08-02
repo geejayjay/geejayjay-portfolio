@@ -68,25 +68,34 @@ export default function HeroSection() {
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
               {/* Decorative Elements */}
-              <div className="absolute -top-6 -right-6 text-coral-500 animate-pulse">
-                <svg className="w-10 h-10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              <div className="absolute -top-4 -right-6 text-coral-500 animate-pulse">
+                {/* Diagonal Three Lines */}
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="20" x2="10" y2="4" />
+                  <line x1="9" y1="20" x2="15" y2="4" />
+                  <line x1="14" y1="20" x2="20" y2="4" />
                 </svg>
               </div>
-              <div className="absolute -top-3 -right-12 text-golden-400 animate-bounce">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+
+              <div className="absolute top-12 right-10 text-golden-400 animate-bounce">
+                {/* Chevron Arrow - moved down */}
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="4 8 12 16 20 8" />
                 </svg>
               </div>
+
               <div className="absolute -bottom-6 -left-6 text-coral-500 animate-pulse">
-                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                {/* Three Slashes */}
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="6" y1="20" x2="10" y2="4" />
+                  <line x1="12" y1="20" x2="16" y2="4" />
+                  <line x1="18" y1="20" x2="22" y2="4" />
                 </svg>
               </div>
 
               {/* Paint splashes */}
-              <div className="absolute -top-8 -left-8 w-16 h-16 bg-coral-200 rounded-full opacity-30 animate-ping"></div>
-              <div className="absolute -bottom-8 -right-8 w-12 h-12 bg-golden-200 rounded-full opacity-40 animate-pulse"></div>
+              <div className="absolute -top-8 -left-8 w-16 h-16 bg-coral-200 rounded-full opacity-25 animate-[ping_2s_ease-in-out_infinite]"></div>
+              <div className="absolute -bottom-8 -right-8 w-12 h-12 bg-golden-200 rounded-full opacity-30 animate-[pulse_3s_ease-in-out_infinite]"></div>
 
               {/* Profile Image */}
               <div className="relative w-80 h-80 md:w-96 md:h-96 flex items-center justify-center animate-fade-in" style={{ animationDuration: "1.2s" }}>
@@ -107,7 +116,6 @@ export default function HeroSection() {
                     style={{ transform: "rotate(-18deg)", transformOrigin: "170px 150px" }}
                   />
                 </svg>
-                {/* Profile Image */}
                 <img
                   src="/profile.png"
                   alt="Jason Jay Gurang"
