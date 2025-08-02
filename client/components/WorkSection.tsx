@@ -4,77 +4,56 @@ type Project = {
   title: string;
   description: string;
   tags: { label: string; color: string }[];
-  gradient: string;
-  icon: JSX.Element;
+  image?: string; // new field
   link?: string;
 };
 
-let projects: Project[] = [
-  {
-    title: "E-Commerce Platform",
-    description: "A full-stack e-commerce solution built with React, Node.js, and PostgreSQL.",
+const projects: Project[] = [
+   {
+    title: "AIPI Web Application",
+    description: "A web application for the AIPI project, a specialized application to store and manage models and data like OneDrive, do inference, track transaction records, and a lightweight CMS.",
     tags: [
-      { label: "React", color: "blue" },
-      { label: "Node.js", color: "green" },
-      { label: "PostgreSQL", color: "purple" },
+      { label: "Vue.js", color: "green" },
+      { label: "Node.js (Fastify)", color: "green" },
+      { label: "Typescript", color: "purple" },
+      { label: "PostgreSQL", color: "blue" },
+      { label: "Redis", color: "orange" },
     ],
-    gradient: "from-blue-500 to-purple-600",
-    icon: (
-      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-      </svg>
-    ),
-    link: "#",
+    image: "/works/AIPI navigation.jpg",
   },
   {
-    title: "Task Management App",
-    description: "A collaborative task management tool with real-time updates and team features.",
+    title: "3D Render of VEERS IOT",
+    description: "A 3D visualization of a device used in the VEERS IOT capstone project.",
     tags: [
-      { label: "React", color: "blue" },
-      { label: "Socket.io", color: "yellow" },
-      { label: "MongoDB", color: "red" },
+      { label: "TinkerCAD", color: "blue" },
     ],
-    gradient: "from-green-500 to-teal-600",
-    icon: (
-      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-    link: "#",
+    image: "/works/VEERS-IOT 3D Render.png",
   },
   {
-    title: "Analytics Dashboard",
-    description: "A comprehensive analytics dashboard with interactive charts and real-time data.",
+    title: "Logo Design",
+    description: "A logo design project for Printing All-Star Enterprise.",
     tags: [
-      { label: "Vue.js", color: "blue" },
-      { label: "D3.js", color: "green" },
-      { label: "Python", color: "purple" },
+      { label: "Photoshop", color: "blue" },
     ],
-    gradient: "from-orange-500 to-red-600",
-    icon: (
-      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-    link: "#",
-  },
-  // Add more projects here as needed
+    image: "/works/PASE Logo.jpg",
+    // link: "#",
+  }
+ 
 ];
 
-projects = [];
 
 export default function WorkSection() {
   const hasProjects = projects.length > 0;
 
   return (
     <section id="work" className="px-6 py-16 md:px-12 lg:px-16 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4" style={{ color: "#2C4848" }}>
             My Work
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            A showcase of my latest projects and professional work, demonstrating my skills in modern web development.
+            A showcase of my latest projects and professional work, demonstrating my skills.
           </p>
         </div>
 
@@ -85,11 +64,8 @@ export default function WorkSection() {
                 key={project.title + idx}
                 className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className={`aspect-video bg-gradient-to-br ${project.gradient} flex items-center justify-center`}>
-                  <div className="text-white text-center">
-                    {project.icon}
-                    <p className="text-sm">{project.title}</p>
-                  </div>
+                <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <img src={project.image} alt={project.title} className="object-cover w-full h-full" />
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.title}</h3>
@@ -104,9 +80,13 @@ export default function WorkSection() {
                       </span>
                     ))}
                   </div>
-                  <button className="text-orange-600 hover:text-orange-700 font-medium text-sm">
-                    View Project →
-                  </button>
+                  {project.link && (
+                    <a href={project.link} target="_blank" rel="noopener noreferrer">
+                      <button className="text-orange-600 hover:text-orange-700 font-medium text-sm">
+                        View Project →
+                      </button>
+                    </a>
+                  )}
                 </div>
               </div>
             ))

@@ -12,6 +12,7 @@ const experienceData = [
     description: `Built a scalable web app using Vue.js and Node.js (Fastify) for managing inference files and images. Improved UX with responsive design and real-time updates via SSE. Added SSO, email notifications, and a simple CMS. 
 Optimized backend with Redis caching, DB indexing, batch processing, and secure session-based auth. Collaborated with researchers for feature planning and documentation.`,
     tags: [
+      "Typescript",
       "Vue.js",
       "Node.js",
       "Fastify",
@@ -135,8 +136,7 @@ export default function AboutSection() {
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4" style={{ color: "#2C4848" }}>About Me</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            I'm a passionate software developer with expertise in modern web technologies,
-            creating innovative solutions and bringing ideas to life through code.
+            I'm a passionate tech enthusiast skilled in web/software development, graphic design, electronics engineering, and embedded systems with Raspberry Pi and Arduino. I'm currently diving into Machine Learning and AI to grow my future skill set.
           </p>
         </div>
 
