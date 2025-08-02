@@ -1,8 +1,24 @@
 import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast"; // adjust path if needed
 
 export default function HeroSection() {
   const titles = ["Software\nDeveloper", "Electronics\nEngineer"];
   const [currentTitle, setCurrentTitle] = useState(0);
+  const { toast } = useToast();
+
+  const handleDownload = () => {
+    toast({
+      title: "Download started",
+      description: "Your resume is being downloaded.",
+    });
+
+    const link = document.createElement("a");
+    link.href = "/gurang_resume.pdf"; // From public folder
+    link.download = "Gurang_Resume.pdf"; // You can rename it here if needed
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,6 +59,7 @@ export default function HeroSection() {
 
             <div className="pt-4">
               <button
+                onClick={handleDownload}
                 className="relative group transition-all duration-300 outline-none"
                 style={{ boxShadow: "none" }}
               >
