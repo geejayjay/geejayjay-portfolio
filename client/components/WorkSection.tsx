@@ -19,7 +19,7 @@ const projects: Project[] = [
       { label: "PostgreSQL", color: "blue" },
       { label: "Redis", color: "orange" },
     ],
-    image: "/works/AIPI navigation.jpg",
+    image: "/works/AIPI navigation.png",
   },
   {
     title: "3D Render of VEERS IOT",
