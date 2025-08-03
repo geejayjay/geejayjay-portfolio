@@ -9,6 +9,7 @@ interface LayoutProps {
 const navLinks = [
   { label: "Home", section: null, className: "text-gray-700" },
   { label: "About", section: "about", className: "text-gray-700" },
+  { label: "Skills", section: "skills", className: "text-gray-700" },
   { label: "Work", section: "work", className: "text-gray-700" },
   { label: "Contact Me!", section: "contact", className: "text-coral-500" },
 ];
