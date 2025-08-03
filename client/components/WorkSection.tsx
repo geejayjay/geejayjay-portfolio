@@ -53,7 +53,7 @@ export default function WorkSection() {
             My Work
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            A showcase of my latest projects and professional work, demonstrating my skills.
+           A selection of my recent work showcasing my skills. Due to NDAs, many ASP.NET/C# projects can't be shared, and some only allow limited public UI previews.
           </p>
         </div>
 
