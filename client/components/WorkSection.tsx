@@ -47,7 +47,7 @@ export default function WorkSection() {
 
   return (
     <section id="work" className="px-6 py-16 md:px-12 lg:px-16 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4" style={{ color: "#2C4848" }}>
             My Work

@@ -50,12 +50,10 @@ const skills: Skill[] = [
   { logo: "/skills/cloudflare.svg", label: "Cloudflare", type: "tools" },
   { logo: "/skills/nginx-original.svg", label: "Nginx", type: "tools" },
 ];
-
-
 export default function SkillsSection() {
   return (
     <section id="skills" className="px-6 py-12 md:px-12 lg:px-16 bg-white">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
             Skills & Technologies
@@ -65,8 +63,9 @@ export default function SkillsSection() {
           </p>
         </div>
 
-        <div className="space-y-8">
-          {['programming', 'frontend', 'backend', 'database', 'tools'].map((category) => {
+        {/* Categories in 2 columns on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          {['programming', 'database', 'frontend', 'backend', 'tools'].map((category) => {
             const categorySkills = skills.filter(skill => skill.type === category);
             const categoryTitles: Record<SkillType, string> = {
               'programming': 'Languages',
@@ -77,7 +76,7 @@ export default function SkillsSection() {
             };
 
             return (
-              <div key={category} className="bg-gray-50 rounded-2xl p-6 sketchy-card">
+              <div key={category} className="bg-gray-50 rounded-2xl p-6 sketchy-card flex flex-col">
                 <div className="flex items-center mb-4">
                   <div className="w-1 h-6 bg-coral-500 rounded-full mr-3"></div>
                   <h3 className="text-lg font-semibold text-teal-500">
@@ -85,22 +84,9 @@ export default function SkillsSection() {
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2 md:gap-3 justify-items-center">
+                <div className="grid grid-cols-7 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-6 gap-2 md:gap-3 justify-items-center">
                   {categorySkills.map((skill, index) => (
-                    <div
-                      key={index}
-                      className="group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-white rounded-lg border border-gray-200 hover:border-coral-400 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                    >
-                      <img
-                        src={skill.logo}
-                        alt={skill.label}
-                        className="w-6 h-6 md:w-7 md:h-7 object-contain transition-transform duration-200 group-hover:scale-110"
-                      />
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-teal-500 text-white px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-lg">
-                        {skill.label}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-3 border-r-3 border-t-3 border-transparent border-t-teal-500"></div>
-                      </div>
-                    </div>
+                    <SkillItem key={index} skill={skill} />
                   ))}
                 </div>
               </div>
@@ -126,3 +112,23 @@ export default function SkillsSection() {
     </section>
   );
 }
+
+/* Skill Item reused */
+function SkillItem({ skill }: { skill: Skill }) {
+  return (
+    <div
+      className="group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-white rounded-lg border border-gray-200 hover:border-coral-400 transition-all duration-200 hover:scale-105 hover:shadow-md"
+    >
+      <img
+        src={skill.logo}
+        alt={skill.label}
+        className="w-6 h-6 md:w-7 md:h-7 object-contain transition-transform duration-200 group-hover:scale-110"
+      />
+      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-teal-500 text-white px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-lg">
+        {skill.label}
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-3 border-r-3 border-t-3 border-transparent border-t-teal-500"></div>
+      </div>
+    </div>
+  );
+}
+
