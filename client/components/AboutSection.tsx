@@ -169,7 +169,7 @@ export default function AboutSection() {
     <section id="about" className="px-6 py-16 md:px-12 lg:px-16 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-5xl md:text-5xl font-bold text-gray-900 mb-4" style={{ color: "#2C4848" }}>About Me</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4" style={{ color: "#2C4848" }}>About Me</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             I'm a passionate tech enthusiast skilled in web/software development, graphic design, electronics engineering, and embedded systems with Raspberry Pi and Arduino. I'm currently diving into Machine Learning and AI to grow my future skill set.
           </p>

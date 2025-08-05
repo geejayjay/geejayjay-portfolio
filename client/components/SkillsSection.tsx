@@ -55,7 +55,7 @@ export default function SkillsSection() {
     <section id="skills" className="px-6 py-12 md:px-12 lg:px-16 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3" style={{ color: "#2C4848" }}>
             Skills & Technologies
           </h2>
           <p className="text-gray-600 max-w-xl mx-auto">
