@@ -105,25 +105,27 @@ const InfoCard = ({
   tagColor,
   url,
 }: InfoCardProps) => (
-  <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 relative z-10">
-    {url && (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute top-4 right-4 inline-flex items-center gap-1 text-sm font-medium text-black-600 hover:underline z-20"
-      >
-        Show credential
-        <ArrowUpRight size={16} />
-      </a>
-    )}
-
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+  <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 relative z-20">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
       <div>
         <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
         <p className="text-orange-600 font-medium">{subtitle}</p>
       </div>
-      <span className="text-gray-500 text-sm">{period}</span>
+
+      <div className="flex flex-col items-start md:items-end gap-1 z-20">
+        <span className="text-gray-500 text-sm">{period}</span>
+        {url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+          >
+            Show credential
+            <ArrowUpRight size={16} />
+          </a>
+        )}
+      </div>
     </div>
 
     {description && (
@@ -149,6 +151,7 @@ const InfoCard = ({
     </div>
   </div>
 );
+
 
 
 
