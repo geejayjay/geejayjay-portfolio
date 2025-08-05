@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ArrowUpRight } from "lucide-react";
 
 type TabType = "experience" | "education" | "certification";
+
+type InfoCardProps = {
+  title: string;
+  subtitle: string;
+  period: string;
+  description?: string;
+  tags: string[];
+  tagColor: string;
+  url?: string;        // optional link
+};
 
 // --- Data Arrays ---
 const experienceData = [
@@ -92,15 +103,21 @@ const InfoCard = ({
   description,
   tags,
   tagColor,
-}: {
-  title: string;
-  subtitle: string;
-  period: string;
-  description?: string;
-  tags: string[];
-  tagColor: string;
-}) => (
-  <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+  url,
+}: InfoCardProps) => (
+  <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 relative z-10">
+    {url && (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-4 right-4 inline-flex items-center gap-1 text-sm font-medium text-black-600 hover:underline z-20"
+      >
+        Show credential
+        <ArrowUpRight size={16} />
+      </a>
+    )}
+
     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
       <div>
         <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
@@ -108,8 +125,12 @@ const InfoCard = ({
       </div>
       <span className="text-gray-500 text-sm">{period}</span>
     </div>
-    {description && <p className="text-gray-600 mb-4 whitespace-pre-line">{description}</p>}
-    <div className="flex flex-wrap gap-2">
+
+    {description && (
+      <p className="text-gray-600 mb-4 whitespace-pre-line">{description}</p>
+    )}
+
+    <div className="flex flex-wrap gap-2 mb-4">
       {tags.map((tag, i) => (
         <span
           key={i}
@@ -128,6 +149,8 @@ const InfoCard = ({
     </div>
   </div>
 );
+
+
 
 // --- Main Component ---
 export default function AboutSection() {
@@ -202,6 +225,7 @@ export default function AboutSection() {
                 period={item.period}
                 tags={item.tags}
                 tagColor={item.tagColor}
+                url={item.url}
               />
             ))}
         </div>
