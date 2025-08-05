@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast"; // adjust path if needed
+import { Download } from "lucide-react"; 
 
 export default function HeroSection() {
   const titles = ["Software\nDeveloper", "Electronics\nEngineer"];
@@ -58,28 +59,29 @@ export default function HeroSection() {
 
             <p className="text-gray-600 text-lg">based in Davao City.</p>
 
-            <div className="pt-4">
-              <button
-                onClick={handleDownload}
-                className="relative group transition-all duration-300 outline-none"
-                style={{ boxShadow: "none" }}
-              >
-                {/* Out-of-position background (bottom right, 2px y, 2px x) */}
-                <span
-                  className="absolute top-[2px] left-[2px] w-full h-full bg-yellow-200 rounded-lg transition-all duration-300 group-hover:top-0 group-hover:left-0"
-                  aria-hidden="true"
-                ></span>
-                {/* Out-of-position border (top left, 2px y, 2px x, in front) */}
-                <span
-                  className="absolute -top-[2px] -left-[2px] w-full h-full border border-coral-400 rounded-lg transition-all duration-300 group-hover:top-0 group-hover:left-0 z-10"
-                  aria-hidden="true"
-                ></span>
-                {/* Resume text */}
-                <span className="relative z-20 block text-coral-500 text-lg px-10 py-2.5 font-medium rounded-lg transition-all duration-300">
-                  Resume
-                </span>
-              </button>
-            </div>
+           <div className="pt-4">
+            <button
+              onClick={handleDownload}
+              className="relative group transition-all duration-300 outline-none"
+              style={{ boxShadow: "none" }}
+            >
+              {/* Out-of-position background */}
+              <span
+                className="absolute top-[2px] left-[2px] w-full h-full bg-yellow-200 rounded-lg transition-all duration-300 group-hover:top-0 group-hover:left-0"
+                aria-hidden="true"
+              ></span>
+              {/* Out-of-position border */}
+              <span
+                className="absolute -top-[2px] -left-[2px] w-full h-full border border-coral-400 rounded-lg transition-all duration-300 group-hover:top-0 group-hover:left-0 z-10"
+                aria-hidden="true"
+              ></span>
+              {/* Resume text + icon */}
+              <span className="relative z-20 flex items-center gap-2 text-coral-500 text-lg px-10 py-2.5 font-medium rounded-lg transition-all duration-300">
+                <Download className="w-5 h-5" />
+                Resume
+              </span>
+            </button>
+          </div>
           </div>
 
           {/* Right Content */}
