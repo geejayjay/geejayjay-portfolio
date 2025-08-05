@@ -72,6 +72,15 @@ const certificationData = [
     period: "July 2023",
     tags: ["Django", "SQLite", "Python", "Javascript", "C"],
     tagColor: "blue",
+    url: "https://credentials.edx.org/credentials/aed040010add44679bb3371bbee2a2cb",
+  },
+  {
+    title: "An Introduction to Programming the Internet of Things",
+    issuer: "Coursera",
+    period: "July 2022",
+    tags: ["Arduino", "Raspberry Pi", "C", "Embedded Systems", "IoT"],
+    tagColor: "blue",
+    url: "https://coursera.org/share/9ac15aff4d6af23da2e99dd68bba3a27",
   },
 ];
 
