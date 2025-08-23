@@ -31,7 +31,9 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
-.env.*
+
+# Allow .env.example
+!.env.example
 
 # OS generated files
 Thumbs.db
