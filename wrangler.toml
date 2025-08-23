@@ -1,0 +1,5 @@
+name = "geejayjay-portfolio"
+compatibility_date = "2025-08-23"
+
+[assets]
+directory = "./dist"
