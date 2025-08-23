@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import emailjs from 'emailjs-com';
+import emailjs from '@emailjs/browser';
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ContactSection() {
