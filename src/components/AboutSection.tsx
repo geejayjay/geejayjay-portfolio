@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
+import { useTheme } from "@/hooks/ThemeContext";
 
 type TabType = "experience" | "education" | "certification";
 
@@ -11,7 +12,7 @@ type InfoCardProps = {
   description?: string;
   tags: string[];
   tagColor: string;
-  url?: string;        // optional link
+  url?: string;
 };
 
 // --- Data Arrays ---
@@ -105,21 +106,21 @@ const InfoCard = ({
   tagColor,
   url,
 }: InfoCardProps) => (
-  <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 relative z-20">
+  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700/60 p-6 relative z-20 transition-colors duration-500">
     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-        <p className="text-orange-600 font-medium">{subtitle}</p>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+        <p className="text-orange-600 dark:text-cyan-400 font-medium">{subtitle}</p>
       </div>
 
       <div className="flex flex-col items-start md:items-end gap-1 z-20">
-        <span className="text-gray-500 text-sm">{period}</span>
+        <span className="text-gray-500 dark:text-gray-400 text-sm">{period}</span>
         {url && (
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-cyan-400 hover:underline"
           >
             Show credential
             <ArrowUpRight size={16} />
@@ -129,7 +130,7 @@ const InfoCard = ({
     </div>
 
     {description && (
-      <p className="text-gray-600 mb-4 whitespace-pre-line">{description}</p>
+      <p className="text-gray-600 dark:text-gray-300 mb-4 whitespace-pre-line">{description}</p>
     )}
 
     <div className="flex flex-wrap gap-2 mb-4">
@@ -137,12 +138,12 @@ const InfoCard = ({
         <span
           key={i}
           className={cn(
-            "px-3 py-1 text-sm rounded-full",
-            tagColor === "blue" && "bg-blue-100 text-blue-800",
-            tagColor === "green" && "bg-green-100 text-green-800",
-            tagColor === "purple" && "bg-purple-100 text-purple-800",
-            tagColor === "orange" && "bg-orange-100 text-orange-800",
-            tagColor === "indigo" && "bg-indigo-100 text-indigo-800"
+            "px-3 py-1 text-sm rounded-full transition-colors",
+            tagColor === "blue" && "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+            tagColor === "green" && "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+            tagColor === "purple" && "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
+            tagColor === "orange" && "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+            tagColor === "indigo" && "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300"
           )}
         >
           {tag}
@@ -152,12 +153,10 @@ const InfoCard = ({
   </div>
 );
 
-
-
-
 // --- Main Component ---
 export default function AboutSection() {
   const [activeTab, setActiveTab] = useState<TabType>("experience");
+  const { theme } = useTheme();
 
   const tabs = [
     { id: "experience", label: "Work Experience" },
@@ -165,18 +164,25 @@ export default function AboutSection() {
     { id: "certification", label: "License/Certification" },
   ] as const;
 
+  const isDark = theme === "dark";
+
   return (
-    <section id="about" className="px-6 py-16 md:px-12 lg:px-16 bg-white">
+    <section id="about" className="px-6 py-16 md:px-12 lg:px-16 bg-white dark:bg-[hsl(220,20%,6%)] transition-colors duration-500">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4" style={{ color: "#2C4848" }}>About Me</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h2
+            className="text-4xl md:text-5xl font-bold mb-4"
+            style={{ color: isDark ? "#00D4FF" : "#2C4848" }}
+          >
+            About Me
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             I'm a passionate tech enthusiast skilled in web/software development, graphic design, electronics engineering, and embedded systems with Raspberry Pi and Arduino. I'm currently diving into Machine Learning and AI to grow my future skill set.
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap justify-center mb-8 border-b border-gray-200">
+        <div className="flex flex-wrap justify-center mb-8 border-b border-gray-200 dark:border-gray-700">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -184,8 +190,10 @@ export default function AboutSection() {
               className={cn(
                 "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
                 activeTab === tab.id
-                  ? "border-coral-500 text-coral-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? isDark
+                    ? "border-cyan-400 text-cyan-400"
+                    : "border-coral-500 text-coral-600"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600"
               )}
             >
               {tab.label}

@@ -1,17 +1,18 @@
-import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "@/hooks/ThemeContext";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navLinks = [
-  { label: "Home", section: null, className: "text-gray-700" },
-  { label: "About", section: "about", className: "text-gray-700" },
-  { label: "Skills", section: "skills", className: "text-gray-700" },
-  { label: "Work", section: "work", className: "text-gray-700" },
-  { label: "Contact Me!", section: "contact", className: "text-coral-500" },
+  { label: "Home", section: null },
+  { label: "About", section: "about" },
+  { label: "Skills", section: "skills" },
+  { label: "Work", section: "work" },
+  { label: "Contact Me!", section: "contact", isContact: true },
 ];
 
 const socialLinks = [
@@ -45,9 +46,9 @@ const socialLinks = [
 ];
 
 export default function Layout({ children }: LayoutProps) {
-  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const onScroll = () => {
@@ -70,28 +71,30 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-[hsl(220,20%,6%)] transition-colors duration-600">
       <nav
         className={cn(
-          "flex items-center justify-between px-6 py-4 md:px-12 lg:px-16 sticky top-0 z-50 border-b border-gray-100 transition-colors duration-300",
-          scrolled ? "bg-gray-50/95 backdrop-blur" : "bg-transparent border-transparent"
+          "flex items-center justify-between px-6 py-4 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-all duration-300",
+          scrolled
+            ? "bg-gray-50/95 dark:bg-[hsl(220,20%,6%)]/95 backdrop-blur border-gray-100 dark:border-gray-800"
+            : "bg-transparent border-transparent"
         )}
       >
-        {/* Logo with GeeJayJay text very close to the right */}
+        {/* Logo */}
         <button
           onClick={() => scrollToSection(null)}
           className="flex items-center"
         >
           <img
-            src="/logo.png"
+            src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
             alt="Logo"
-            className="h-8 w-auto"
+            className="h-8 w-auto transition-all duration-300"
             style={{ maxHeight: "2rem" }}
           />
           <span className="ml-[-0.5rem] mb-3 text-lg font-semibold transition-colors sketchy-text">
-            <span style={{ color: "#CF6C58" }}>ee</span>
-            <span style={{ color: "#5f9d9dff" }}>jay</span>
-            <span style={{ color: "#D3A658" }}>jay</span>
+            <span className={theme === "dark" ? "text-cyan-400" : ""} style={theme === "light" ? { color: "#CF6C58" } : {}}>ee</span>
+            <span className={theme === "dark" ? "text-emerald-400" : ""} style={theme === "light" ? { color: "#5f9d9dff" } : {}}>jay</span>
+            <span className={theme === "dark" ? "text-cyan-300" : ""} style={theme === "light" ? { color: "#D3A658" } : {}}>jay</span>
           </span>
         </button>
 
@@ -101,23 +104,29 @@ export default function Layout({ children }: LayoutProps) {
             <button
               key={link.label}
               onClick={() => scrollToSection(link.section)}
-              className={`${link.className} text-base text-left transition-colors sketchy-text ${link.label === "Contact Me!" ? "bg-coral-500 hover:bg-coral-600 text-white font-bold px-5 py-1.5 rounded-lg transition-all transform hover:scale-105 shadow-lg sketchy-button animate-fade-in" : "hover:text-gray-900"}`}
-              style={link.label === "Contact Me!" ? { animationDuration: "1.2s", animationIterationCount: "1", animationTimingFunction: "ease-in", opacity: 0.92 } : {}}
+              className={cn(
+                "text-base text-left transition-all sketchy-text",
+                link.isContact
+                  ? "bg-coral-500 dark:bg-cyan-500 hover:bg-coral-600 dark:hover:bg-cyan-600 text-white font-bold px-5 py-1.5 rounded-lg transform hover:scale-105 shadow-lg sketchy-button animate-fade-in"
+                  : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              )}
+              style={link.isContact ? { animationDuration: "1.2s", animationIterationCount: "1", animationTimingFunction: "ease-in", opacity: 0.92 } : {}}
             >
               {link.label}
             </button>
           ))}
         </div>
 
-        {/* Desktop social links */}
+        {/* Desktop: theme toggle + social links */}
         <div className="hidden md:flex items-center space-x-4">
+          <ThemeToggle />
           {socialLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-900 transition-colors text-base"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-base"
               aria-label={link.label}
             >
               {link.icon}
@@ -126,9 +135,10 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Mobile menu button */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center space-x-2">
+          <ThemeToggle />
           <button
-            className="text-gray-600"
+            className="text-gray-600 dark:text-gray-400"
             onClick={() => setMobileOpen((open) => !open)}
             aria-label="Open menu"
           >
@@ -144,17 +154,22 @@ export default function Layout({ children }: LayoutProps) {
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-30 transition-opacity"
+            className="fixed inset-0 bg-black bg-opacity-30 dark:bg-opacity-50 transition-opacity"
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
           ></div>
           {/* Side nav (right) */}
-          <div className="relative w-64 max-w-[80vw] h-full bg-white bg-opacity-95 shadow-xl p-8 flex flex-col space-y-6">
+          <div className="relative w-64 max-w-[80vw] h-full bg-white dark:bg-gray-900 bg-opacity-95 dark:bg-opacity-95 shadow-xl p-8 flex flex-col space-y-6">
             {navLinks.map((link) => (
               <button
                 key={link.label}
                 onClick={() => scrollToSection(link.section)}
-                className={`${link.className} text-lg text-left`}
+                className={cn(
+                  "text-lg text-left",
+                  link.isContact
+                    ? "text-coral-500 dark:text-cyan-400"
+                    : "text-gray-700 dark:text-gray-300"
+                )}
               >
                 {link.label}
               </button>
@@ -166,7 +181,7 @@ export default function Layout({ children }: LayoutProps) {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   aria-label={link.label}
                 >
                   {link.icon}

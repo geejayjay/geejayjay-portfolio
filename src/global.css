@@ -7,7 +7,7 @@
    * Tailwind CSS theme
    * tailwind.config.ts expects the following color variables to be expressed as HSL values.
    * A different format will require also updating the theme in tailwind.config.ts.
-  */
+   */
   :root {
     --background: 0 0% 100%;
     --foreground: 176 26% 18%;
@@ -40,58 +40,68 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Theme-specific custom properties */
+    --theme-accent: 9 70% 55%; /* coral for light */
+    --theme-accent-secondary: 40 60% 55%; /* golden for light */
+    --theme-heading: 176 26% 18%; /* teal-500 */
+    --theme-glow-color: rgba(207, 108, 88, 0.3);
+    --theme-card-bg: 0 0% 97%;
+    --theme-card-border: 0 0% 90%;
   }
 
   .dark {
-    --background: 176 26% 8%;
-    --foreground: 0 0% 98%;
+    --background: 220 20% 6%;
+    --foreground: 210 20% 92%;
 
-    --card: 176 26% 8%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 18% 10%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 176 26% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 18% 10%;
+    --popover-foreground: 210 20% 92%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 176 26% 18%;
+    --primary: 210 20% 92%;
+    --primary-foreground: 220 20% 6%;
 
-    --secondary: 176 25% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 210 20% 92%;
 
-    --muted: 176 25% 15%;
-    --muted-foreground: 176 10% 65%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 9 50% 58%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 190 100% 45%;
+    --accent-foreground: 220 20% 6%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 176 25% 15%;
-    --input: 176 25% 15%;
-    --ring: 9 50% 58%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 190 100% 45%;
+
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 190 100% 45%;
+    --sidebar-primary-foreground: 220 20% 6%;
+    --sidebar-accent: 220 15% 14%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 190 100% 45%;
+
+    /* Theme-specific custom properties */
+    --theme-accent: 190 100% 50%; /* cyan for dark */
+    --theme-accent-secondary: 145 100% 60%; /* neon green for dark */
+    --theme-heading: 190 100% 50%;
+    --theme-glow-color: rgba(0, 212, 255, 0.3);
+    --theme-card-bg: 220 18% 10%;
+    --theme-card-border: 220 15% 20%;
   }
 }
 
@@ -102,10 +112,34 @@
 
   body {
     @apply bg-background text-foreground;
+    transition:
+      background-color 0.6s ease,
+      color 0.6s ease;
+  }
+
+  /* Smooth transitions for all themed elements */
+  html.dark *,
+  html:not(.dark) * {
+    transition:
+      background-color 0.6s ease,
+      color 0.6s ease,
+      border-color 0.6s ease,
+      box-shadow 0.6s ease,
+      fill 0.6s ease,
+      stroke 0.6s ease;
+  }
+
+  /* Override transition during intro for snappier flashes */
+  html.intro-active *,
+  html.intro-active {
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease,
+      border-color 0.3s ease !important;
   }
 }
 
-/* Sketchy paint effects */
+/* ===== LIGHT MODE: Sketchy paint effects ===== */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -123,17 +157,25 @@
 }
 
 .sketchy-border::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: 50%;
   padding: 2px;
-  background: linear-gradient(45deg, #CF6C58, #D3A658, #CF6C58);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(45deg, #cf6c58, #d3a658, #cf6c58);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: exclude;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
   animation: rotate 3s linear infinite;
+}
+
+.dark .sketchy-border::before {
+  background: linear-gradient(45deg, #00d4ff, #39ff14, #00d4ff);
 }
 
 @keyframes rotate {
@@ -144,8 +186,13 @@
 
 .sketchy-line {
   filter: url(#roughPaper);
-  stroke-dasharray: 5,3;
+  stroke-dasharray: 5, 3;
   animation: dash 2s linear infinite;
+}
+
+.dark .sketchy-line {
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.6));
 }
 
 @keyframes dash {
@@ -159,17 +206,25 @@
   filter: drop-shadow(1px 1px 0px rgba(207, 108, 88, 0.1));
 }
 
+.dark .sketchy-text {
+  filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.15));
+}
+
 .sketchy-text::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -2px;
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #CF6C58, transparent);
+  background: linear-gradient(90deg, transparent, #cf6c58, transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
   border-radius: 1px;
+}
+
+.dark .sketchy-text::after {
+  background: linear-gradient(90deg, transparent, #00d4ff, transparent);
 }
 
 .sketchy-text:hover::after {
@@ -189,25 +244,41 @@
 .sketchy-button {
   position: relative;
   border: 2px solid transparent;
-  background: linear-gradient(#CF6C58, #CF6C58) padding-box,
-              linear-gradient(45deg, #CF6C58, #D3A658) border-box;
+  background:
+    linear-gradient(#cf6c58, #cf6c58) padding-box,
+    linear-gradient(45deg, #cf6c58, #d3a658) border-box;
   border-radius: 8px;
   filter: drop-shadow(2px 2px 4px rgba(207, 108, 88, 0.3));
 }
 
+.dark .sketchy-button {
+  background:
+    linear-gradient(#00d4ff, #00d4ff) padding-box,
+    linear-gradient(45deg, #00d4ff, #39ff14) border-box;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
+}
+
 .sketchy-button::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -3px;
   border-radius: 10px;
   padding: 1px;
-  background: linear-gradient(45deg, #CF6C58, #D3A658, #CF6C58);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(45deg, #cf6c58, #d3a658, #cf6c58);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: exclude;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+
+.dark .sketchy-button::before {
+  background: linear-gradient(45deg, #00d4ff, #39ff14, #00d4ff);
 }
 
 .sketchy-button:hover::before {
@@ -224,7 +295,7 @@
   }
 }
 
-/* Organic, imperfect circle */
+/* Organic, imperfect circle (light mode) */
 .organic-circle {
   clip-path: polygon(
     50% 0%,
@@ -251,7 +322,7 @@
 }
 
 .organic-circle::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   clip-path: polygon(
@@ -279,13 +350,17 @@
   opacity: 0.3;
 }
 
-/* Paint splash effects */
+.dark .organic-circle::before {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+/* Paint splash effects (light only) */
 .paint-splash {
   position: relative;
 }
 
 .paint-splash::after {
-  content: '';
+  content: "";
   position: absolute;
   top: -5px;
   right: -5px;
@@ -297,8 +372,14 @@
   animation: splash 2s ease-in-out infinite;
 }
 
+.dark .paint-splash::after {
+  background: radial-gradient(circle, #00d4ff, transparent);
+  opacity: 0.2;
+}
+
 @keyframes splash {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(0.8) rotate(0deg);
     opacity: 0.3;
   }
@@ -308,7 +389,7 @@
   }
 }
 
-/* Sketchy card effects */
+/* ===== SKETCHY CARD — LIGHT: paint gradients, DARK: neon glow ===== */
 .sketchy-card {
   position: relative;
   border-radius: 12px;
@@ -319,18 +400,33 @@
   transition: all 0.3s ease;
 }
 
+.dark .sketchy-card {
+  background: linear-gradient(135deg, hsl(220, 18%, 10%), hsl(220, 18%, 12%));
+  filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.08));
+  border-color: hsl(220, 15%, 20%);
+}
+
 .sketchy-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: 12px;
   padding: 2px;
   background: linear-gradient(45deg, #f97316, #eab308, #f97316, #f59e0b);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: exclude;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0.3;
+}
+
+.dark .sketchy-card::before {
+  background: linear-gradient(45deg, #00d4ff, #39ff14, #00d4ff, #00b4d8);
+  opacity: 0.15;
 }
 
 .sketchy-card:hover {
@@ -338,34 +434,84 @@
   filter: drop-shadow(5px 5px 12px rgba(249, 115, 22, 0.2));
 }
 
+.dark .sketchy-card:hover {
+  transform: translateY(-2px) rotate(0deg);
+  filter: drop-shadow(0 0 16px rgba(0, 212, 255, 0.2));
+}
+
 .sketchy-card:hover::before {
   opacity: 0.6;
   animation: cardGlow 2s ease-in-out infinite alternate;
 }
 
+.dark .sketchy-card:hover::before {
+  opacity: 0.4;
+  animation: cardGlowDark 2s ease-in-out infinite alternate;
+}
+
 @keyframes cardGlow {
   0% {
-    background: linear-gradient(45deg, #CF6C58, #D3A658, #CF6C58, #2C4848);
+    background: linear-gradient(45deg, #cf6c58, #d3a658, #cf6c58, #2c4848);
   }
   100% {
-    background: linear-gradient(45deg, #2C4848, #CF6C58, #D3A658, #CF6C58);
+    background: linear-gradient(45deg, #2c4848, #cf6c58, #d3a658, #cf6c58);
   }
 }
 
-/* Rough paper texture overlay */
+@keyframes cardGlowDark {
+  0% {
+    background: linear-gradient(45deg, #00d4ff, #39ff14, #00d4ff, #00b4d8);
+  }
+  100% {
+    background: linear-gradient(45deg, #00b4d8, #00d4ff, #39ff14, #00d4ff);
+  }
+}
+
+/* ===== BODY BACKGROUND OVERLAY ===== */
+/* Light: Rough paper texture */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-image:
-    radial-gradient(circle at 20% 50%, transparent 20%, rgba(207, 108, 88, 0.03) 21%, rgba(207, 108, 88, 0.03) 34%, transparent 35%),
-    linear-gradient(0deg, transparent 24%, rgba(207, 108, 88, 0.02) 25%, rgba(207, 108, 88, 0.02) 26%, transparent 27%, transparent 74%, rgba(207, 108, 88, 0.02) 75%, rgba(207, 108, 88, 0.02) 76%, transparent 77%);
+    radial-gradient(
+      circle at 20% 50%,
+      transparent 20%,
+      rgba(207, 108, 88, 0.03) 21%,
+      rgba(207, 108, 88, 0.03) 34%,
+      transparent 35%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 24%,
+      rgba(207, 108, 88, 0.02) 25%,
+      rgba(207, 108, 88, 0.02) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(207, 108, 88, 0.02) 75%,
+      rgba(207, 108, 88, 0.02) 76%,
+      transparent 77%
+    );
   pointer-events: none;
   z-index: 1;
   opacity: 0.8;
+  transition:
+    opacity 0.6s ease,
+    background-image 0.6s ease;
+}
+
+/* Dark: Dot grid pattern */
+.dark body::before {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(0, 212, 255, 0.06) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  opacity: 1;
 }
 
 /* Apply sketchy effects to cards automatically */
@@ -374,27 +520,59 @@ body::before {
   @apply sketchy-card;
 }
 
-/* Section titles with paint effects */
-h1, h2 {
+/* ===== HEADING STYLES ===== */
+/* Light: Section titles with paint effects */
+h1,
+h2 {
   position: relative;
   filter: drop-shadow(2px 2px 0px rgba(249, 115, 22, 0.1));
 }
 
-h1::after, h2::after {
-  content: '';
+.dark h1,
+.dark h2 {
+  filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.1));
+}
+
+/* Light mode: paint underline */
+h1::after,
+h2::after {
+  content: "";
   position: absolute;
   bottom: -4px;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, #CF6C58, #D3A658, #CF6C58, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #cf6c58,
+    #d3a658,
+    #cf6c58,
+    transparent
+  );
   opacity: 0.3;
   border-radius: 2px;
   animation: titleUnderline 3s ease-in-out infinite;
 }
 
+/* Dark mode: typing cursor underline */
+.dark h1::after,
+.dark h2::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #00d4ff,
+    #00b4d8,
+    #00d4ff,
+    transparent
+  );
+  opacity: 0.4;
+  animation: titleUnderlineDark 2s ease-in-out infinite;
+}
+
 @keyframes titleUnderline {
-  0%, 100% {
+  0%,
+  100% {
     transform: scaleX(0.8);
     opacity: 0.2;
   }
@@ -404,10 +582,87 @@ h1::after, h2::after {
   }
 }
 
+@keyframes titleUnderlineDark {
+  0%,
+  100% {
+    transform: scaleX(0.6);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 0.5;
+  }
+}
+
+/* ===== UTILITY ANIMATIONS ===== */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px);}
-  to { opacity: 1; transform: translateY(0);}
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-fade-in {
   animation-name: fade-in;
+}
+
+/* ===== INTRO FLASH OVERLAY ===== */
+@keyframes introFlash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+html.intro-active body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(0, 212, 255, 0.15),
+    transparent 70%
+  );
+  animation: introFlash 1.4s ease-out forwards;
+}
+
+/* ===== DARK MODE FONT HINTS ===== */
+.dark h1,
+.dark h2,
+.dark h3 {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  letter-spacing: -0.02em;
+}
+
+/* ===== DARK MODE SCANLINE EFFECT (subtle) ===== */
+.dark body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 212, 255, 0.008) 2px,
+    rgba(0, 212, 255, 0.008) 4px
+  );
+  opacity: 0.5;
 }

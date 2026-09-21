@@ -4,15 +4,19 @@ import AboutSection  from "@/components/AboutSection";
 import SkillsSection  from "@/components/SkillsSection";
 import WorkSection  from "@/components/WorkSection";
 import ContactSection  from "@/components/ContactSection";
+import { ThemeProvider } from "@/hooks/ThemeContext";
 
 export default function Index() {
   return (
-    <Layout>
-      <HeroSection />
-      <AboutSection />
-      <SkillsSection />
-      <WorkSection />
-      <ContactSection /> 
-    </Layout>
+    <ThemeProvider>
+      <Layout>
+        <HeroSection />
+        <AboutSection />
+        <SkillsSection />
+        <WorkSection />
+        <ContactSection /> 
+      </Layout>
+    </ThemeProvider>
   );
 }
+

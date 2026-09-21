@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/hooks/ThemeContext";
 
 type ProjectType = "Web" | "AI" | "Graphic Design" | "Mobile" | "Embedded Systems" | "3D Modeling" 
 
@@ -42,26 +43,25 @@ const projects: Project[] = [
       { label: "Photoshop", color: "blue" },
     ],
     image: "/works/PASE Logo.jpg",
-    // link: "#",
   }
  
 ];
 
 
-const MAX_DISPLAY = 6; // number of projects to show before "See All"
+const MAX_DISPLAY = 6;
 
 export default function WorkSection() {
-  const hasProjects = projects.length > 0;
-  const displayedProjects = projects.slice(0, MAX_DISPLAY);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
-   <section id="work" className="px-6 py-16 md:px-12 lg:px-16 bg-gray-50">
+   <section id="work" className="px-6 py-16 md:px-12 lg:px-16 bg-gray-50 dark:bg-[hsl(220,20%,6%)] transition-colors duration-500">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#2C4848" }}>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: isDark ? "#00D4FF" : "#2C4848" }}>
               My Work
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               A selection of my recent work showcasing my skills. Due to NDAs, many ASP.NET/C# projects can't be shared, and some only allow limited public UI previews.
             </p>
           </div>
@@ -71,32 +71,40 @@ export default function WorkSection() {
               {projects.slice(0, MAX_DISPLAY).map((project, idx) => (
                 <div
                   key={project.title + idx}
-                  className="group relative bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-coral-400 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl sketchy-card"
+                  className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl sketchy-card ${
+                    isDark
+                      ? "bg-gray-800/60 border-gray-700/60 hover:border-cyan-500/60"
+                      : "bg-white border-gray-200 hover:border-coral-400"
+                  }`}
                 >
-                  {/* Image Container with automatic square sizing */}
-                  <div className="relative aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {/* Image Container */}
+                  <div className="relative aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
                     {project.image ? (
                       <img
                         src={project.image}
                         alt={project.title}
-                        className="w-full h-full object-contain bg-white transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full object-contain bg-white dark:bg-gray-900 transition-transform duration-300 group-hover:scale-105"
                         style={{ objectFit: 'contain' }}
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
                     )}
 
                     {/* Project type badge */}
-                    <div className="absolute top-3 left-3 bg-teal-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+                    <div className={`absolute top-3 left-3 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg ${
+                      isDark ? "bg-cyan-600" : "bg-teal-500"
+                    }`}>
                       {project.type}
                     </div>
 
                     {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-teal-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
+                    <div className={`absolute inset-0 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4 ${
+                      isDark ? "bg-gray-900/90" : "bg-teal-500/90"
+                    }`}>
                       <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
                       <p className="text-sm mb-3 opacity-90">{project.description}</p>
 
@@ -107,12 +115,14 @@ export default function WorkSection() {
                             key={tag.label}
                             className={cn(
                               "px-2 py-1 text-xs rounded-full font-medium",
-                              tag.color === "blue" && "bg-blue-100 text-blue-800",
-                              tag.color === "emerald" && "bg-emerald-100 text-emerald-800",
-                              tag.color === "purple" && "bg-purple-100 text-purple-800",
-                              tag.color === "red" && "bg-red-100 text-red-800",
-                              tag.color === "yellow" && "bg-yellow-100 text-yellow-800",
-                              tag.color === "green" && "bg-green-100 text-green-800"
+                              isDark ? "bg-gray-700 text-cyan-300" : (
+                                tag.color === "blue" && "bg-blue-100 text-blue-800",
+                                tag.color === "emerald" && "bg-emerald-100 text-emerald-800",
+                                tag.color === "purple" && "bg-purple-100 text-purple-800",
+                                tag.color === "red" && "bg-red-100 text-red-800",
+                                tag.color === "yellow" && "bg-yellow-100 text-yellow-800",
+                                tag.color === "green" && "bg-green-100 text-green-800"
+                              )
                             )}
                           >
                             {tag.label}
@@ -136,32 +146,24 @@ export default function WorkSection() {
                       )}
                     </div>
                   </div>
-
-                  {/* Project info - always visible */}
-                  {/* <div className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-teal-500 group-hover:text-coral-500 transition-colors">
-                        {project.title}
-                      </h3>
-                    </div>
-                    <p className="text-gray-600 text-sm line-clamp-2">
-                      {project.description}
-                    </p>
-                  </div> */}
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-24">
-              <div className="text-6xl text-gray-300 mb-4">🚧</div>
-              <h3 className="text-2xl font-semibold text-gray-400 mb-2">Projects Coming Soon</h3>
-              <p className="text-gray-500">Check back later for my latest work!</p>
+              <div className="text-6xl text-gray-300 dark:text-gray-600 mb-4">🚧</div>
+              <h3 className="text-2xl font-semibold text-gray-400 dark:text-gray-500 mb-2">Projects Coming Soon</h3>
+              <p className="text-gray-500 dark:text-gray-600">Check back later for my latest work!</p>
             </div>
           )}
 
           {projects.length > MAX_DISPLAY && (
             <div className="text-center mt-8">
-              <button className="bg-coral-500 hover:bg-coral-600 text-white font-medium px-6 py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl">
+              <button className={`font-medium px-6 py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl ${
+                isDark
+                  ? "bg-cyan-500 hover:bg-cyan-600 text-gray-900"
+                  : "bg-coral-500 hover:bg-coral-600 text-white"
+              }`}>
                 View All Projects →
               </button>
             </div>
