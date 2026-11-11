@@ -462,26 +462,17 @@ html[data-sweep] .sweep-fx {
     mask-image: linear-gradient(90deg, transparent 0, #000 6% 94%, transparent 100%);
   }
 
-  /* Dark mode on touch screens: 1s and 0s popping out where you tap */
-  .bit-burst {
+  /* Dark mode: 1s and 0s that sink a little and fade (mouse trail, click drip) */
+  .bit {
     position: fixed;
     z-index: 5;
-    width: 0;
-    height: 0;
     pointer-events: none;
-  }
-
-  .bit-burst span {
-    position: absolute;
-    left: 0;
-    top: 0;
     font-family: "JetBrains Mono", monospace;
-    font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
+    line-height: 1;
     color: rgb(var(--c-accent));
-    text-shadow: 0 0 8px currentColor;
     opacity: 0;
-    animation: bit-burst 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: bit-drip 1.2s cubic-bezier(0.35, 0, 0.6, 1) both;
   }
 
   .code-drift {
@@ -541,17 +532,17 @@ html[data-sweep] .sweep-fx {
   }
 }
 
-@keyframes bit-burst {
+@keyframes bit-drip {
   0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+    transform: translate(-50%, -50%);
   }
-  70% {
-    opacity: 0.9;
+  12% {
+    opacity: var(--o, 0.3);
   }
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
+    transform: translate(-50%, calc(-50% + var(--fall, 30px)));
   }
 }
 

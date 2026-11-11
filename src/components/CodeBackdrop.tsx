@@ -5,9 +5,10 @@ import { useEffect, useRef, ReactNode } from "react";
  * The columns sit at different depths and shift against the mouse (parallax),
  * and the code lights up around the cursor like a torch over a dark screen.
  *
- * Touch screens have no hovering cursor, so a tap does the same job: the code
- * lights up under the finger for a moment and a burst of 1s and 0s pops out —
- * the dark-mode counterpart to tap-to-paint in light mode.
+ * Moving the mouse leaves a very faint trail of 1s and 0s that sink and fade,
+ * and a click lets a small cluster of them drip down: the dark-mode twins of
+ * the thin paint line and the splash in light mode. Touch screens have no
+ * hovering cursor, so a tap also lights the code up under the finger.
  */
 
 const SNIPPETS: string[] = [
@@ -177,37 +178,81 @@ export default function CodeBackdrop() {
       target.py = (e.clientY / window.innerHeight) * 2 - 1;
       target.mx = e.clientX;
       target.my = e.clientY;
+      if (e.pointerType !== "touch") trail(e.clientX, e.clientY);
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
-    /** a burst of 1s and 0s popping out from the tap point */
-    const burst = (x: number, y: number) => {
-      const el = document.createElement("div");
-      el.className = "bit-burst";
+    /** one 1 or 0 that sinks a little way down the screen and fades out */
+    const bit = (x: number, y: number, fall: number, opacity: number, ms: number, delay: number, size: number) => {
+      const el = document.createElement("span");
+      el.className = "bit";
       el.setAttribute("aria-hidden", "true");
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
-      const count = 12;
-      for (let i = 0; i < count; i++) {
-        const span = document.createElement("span");
-        const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
-        const dist = 40 + Math.random() * 60;
-        span.textContent = Math.random() < 0.5 ? "0" : "1";
-        span.style.setProperty("--dx", `${(Math.cos(angle) * dist).toFixed(1)}px`);
-        span.style.setProperty("--dy", `${(Math.sin(angle) * dist).toFixed(1)}px`);
-        span.style.animationDelay = `${Math.round(Math.random() * 80)}ms`;
-        if (i % 3 === 0) span.style.color = "rgb(var(--c-accent2))";
-        el.appendChild(span);
-      }
+      el.textContent = Math.random() < 0.5 ? "0" : "1";
+      el.style.left = `${x.toFixed(1)}px`;
+      el.style.top = `${y.toFixed(1)}px`;
+      el.style.fontSize = `${size}px`;
+      el.style.setProperty("--fall", `${fall.toFixed(0)}px`);
+      el.style.setProperty("--o", opacity.toFixed(2));
+      el.style.animationDuration = `${ms}ms`;
+      el.style.animationDelay = `${delay}ms`;
+      if (Math.random() < 0.3) el.style.color = "rgb(var(--c-accent2))";
       document.body.appendChild(el);
-      window.setTimeout(() => el.remove(), 1100);
+      window.setTimeout(() => el.remove(), ms + delay + 60);
+    };
+
+    /** click or tap: a small cluster of bits that drips down and fades */
+    const drip = (x: number, y: number) => {
+      const count = 7;
+      for (let i = 0; i < count; i++) {
+        bit(
+          x + (Math.random() - 0.5) * 46,
+          y + (Math.random() - 0.5) * 16,
+          50 + Math.random() * 80,
+          0.4 + Math.random() * 0.3,
+          1200 + Math.random() * 700,
+          Math.random() * 220,
+          11 + Math.random() * 4,
+        );
+      }
+    };
+
+    // a faint trail of bits where the mouse goes: the dark-mode twin of the
+    // thin paint line in light mode. One every so many pixels of travel.
+    let trailLast: { x: number; y: number } | null = null;
+    let trailGap = 30;
+    const trail = (x: number, y: number) => {
+      if (!trailLast) {
+        trailLast = { x, y };
+        return;
+      }
+      if (Math.hypot(x - trailLast.x, y - trailLast.y) < trailGap) return;
+      trailLast = { x, y };
+      trailGap = 26 + Math.random() * 34;
+      if (document.querySelectorAll(".bit").length > 70) return; // stay light
+      bit(
+        x + (Math.random() - 0.5) * 12,
+        y + (Math.random() - 0.5) * 12,
+        14 + Math.random() * 22,
+        0.2 + Math.random() * 0.18,
+        900 + Math.random() * 500,
+        0,
+        10 + Math.random() * 2,
+      );
     };
 
     // a touch that lifts quickly without moving is a tap (not the start of a scroll)
     let touchStart: { x: number; y: number; t: number } | null = null;
 
     const onDown = (e: PointerEvent) => {
-      if (e.pointerType === "touch") touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+      // taps on buttons, links, tabs etc. are just taps
+      const target = e.target;
+      if (target instanceof Element && target.closest('a, button, input, textarea, select, label, summary, [role="button"], [role="tab"], [role="switch"], [role="link"], [contenteditable]')) return;
+      if (e.pointerType === "touch") {
+        touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+      } else if (e.button === 0) {
+        // mouse: every click lets a few bits drip (the torch already follows the cursor)
+        drip(e.clientX, e.clientY);
+      }
     };
 
     const onUp = (e: PointerEvent) => {
@@ -228,7 +273,7 @@ export default function CodeBackdrop() {
         target.r = 0;
         if (!raf) raf = requestAnimationFrame(tick);
       }, 1400);
-      burst(e.clientX, e.clientY);
+      drip(e.clientX, e.clientY);
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
@@ -247,6 +292,7 @@ export default function CodeBackdrop() {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
       clearTimeout(dimTimer);
+      document.querySelectorAll(".bit").forEach((el) => el.remove());
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
