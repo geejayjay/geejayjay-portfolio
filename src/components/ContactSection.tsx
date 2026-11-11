@@ -24,6 +24,20 @@ export default function ContactSection() {
 
   const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!formRef.current) return;
+
+    // Honeypot check: if filled, quietly succeed to foil bots without sending via EmailJS
+    const formData = new FormData(formRef.current);
+    if (formData.get("_gotcha")) {
+      toast({
+        variant: "default",
+        title: "Email sent",
+        description: "Your email has been sent successfully.",
+      });
+      formRef.current.reset();
+      return;
+    }
+
     setIsSending(true);
 
     try {
@@ -100,6 +114,16 @@ export default function ContactSection() {
 
         <Reveal delay={0.12}>
           <form ref={formRef} onSubmit={sendEmail} className="surface space-y-5 p-6 sm:p-8">
+            {/* Honeypot field to block automated bot submissions */}
+            <input
+              type="text"
+              name="_gotcha"
+              tabIndex={-1}
+              autoComplete="off"
+              className="hidden"
+              aria-hidden="true"
+            />
+
             <div>
               <label htmlFor="name" className={labelClass}>
                 {isDark ? "name:" : "Your name"}

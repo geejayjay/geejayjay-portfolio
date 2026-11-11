@@ -26,19 +26,12 @@ export default function HeroSection() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDownload = () => {
+  const onResumeClick = () => {
     toast({
       variant: "default",
       title: "Download started",
       description: "Resume is being downloaded...",
     });
-
-    const link = document.createElement("a");
-    link.href = "/gurang_resume.pdf";
-    link.download = "Gurang_Resume.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const [first, second] = titles[current];
@@ -88,10 +81,15 @@ export default function HeroSection() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
-            <button onClick={handleDownload} className="btn btn-primary">
+            <a
+              href="/gurang_resume.pdf"
+              download="Gurang_Resume.pdf"
+              onClick={onResumeClick}
+              className="btn btn-primary"
+            >
               <Download className="h-5 w-5" />
               {isDark ? "resume.pdf" : "Resume"}
-            </button>
+            </a>
             <a href="#work" className="btn btn-ghost">
               {isDark ? "ls ./work" : "See my work"}
             </a>
