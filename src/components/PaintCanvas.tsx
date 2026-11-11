@@ -38,8 +38,6 @@ const PIGMENTS = [
 
 const LIFE_MS = 6500;
 const MAX_POINTS = 2600;
-/** a pause this long counts as lifting the brush (new colour, new stroke) */
-const LIFT_MS = 900;
 /** how strong the faint hover line is, relative to a pressed wash */
 const HOVER_STRENGTH = 0.36;
 
@@ -93,7 +91,19 @@ type Dot = {
 };
 
 /** where the brush ran dry: a thin unpainted streak running along the stroke */
-type Gap = { d0: number; d1: number; off: number; th: number; o: number };
+type Gap = {
+  d0: number;
+  d1: number;
+  off: number;
+  drift: number; // how much the streak's centre wanders across the brush
+  th: number; // baseline peak thickness
+  ratio: number; // peak thickness relative to local stroke width
+  o: number;
+  // how its width wobbles and pinches along its length
+  phase: number;
+  freq: number;
+  freq2: number;
+};
 
 type Stroke = {
   pts: Pt[];
@@ -114,6 +124,10 @@ type Stroke = {
   nextDot: number;
   nextGap: number;
   nextHue: number;
+  /** varied idle pause before this stroke lifts */
+  liftMs: number;
+  /** varied time when an unclicked hover stroke closes itself so it isn't continuous */
+  closeAt: number;
 };
 
 type Splash = {
@@ -207,6 +221,8 @@ export default function PaintCanvas() {
     let press = 0; // eased 0..1
     let pressed = false;
     let overText = false;
+    /** varied cooldown until the next unclicked hover stroke is allowed to start */
+    let resumeAt = 0;
     // where the cursor rests on screen, so scrolling can keep the brush moving
     let pointer: { x: number; y: number } | null = null;
 
@@ -220,7 +236,8 @@ export default function PaintCanvas() {
     const dry = (age: number) => (age < 0.62 ? 1 : Math.max(0, 1 - (age - 0.62) / 0.38));
 
     /**
-     * One pass of the wash: a closed ribbon with smoothed, wandering edges.
+     * One pass of the wash: a closed ribbon with smoothed, wandering edges
+     * and properly tapered/rounded caps at the start and end of the stroke.
      * With `byPress` the ribbon is only as wide as the brush was pressed, which
      * is how the bold part of a stroke swells out of the faint part seamlessly.
      */
@@ -232,13 +249,22 @@ export default function PaintCanvas() {
       byPress: boolean,
       from = 0,
       to = pts.length - 1,
+      capStart = false,
+      capEnd = false,
     ) => {
+      const total = pts.length;
+      const taperAt = (i: number) => {
+        let t = 1;
+        if (capStart && i < 3) t *= Math.min(1, (i + 0.35) / 3);
+        if (capEnd && total - 1 - i < 4) t *= Math.min(1, (total - 1 - i + 0.25) / 4);
+        return t;
+      };
       let px = 0;
       let py = 0;
       ctx.beginPath();
       for (let i = from; i <= to; i++) {
         const p = pts[i];
-        const hw = p.w * fades[i] * scale * p.l[li] * (byPress ? p.press : 1);
+        const hw = p.w * fades[i] * scale * p.l[li] * (byPress ? p.press : 1) * taperAt(i);
         const x = p.x + p.nx * hw;
         const y = p.y + p.ny * hw;
         if (i === from) ctx.moveTo(x, y);
@@ -247,39 +273,76 @@ export default function PaintCanvas() {
         py = y;
       }
       ctx.lineTo(px, py);
-      for (let i = to; i >= from; i--) {
+
+      // Round off the leading tip so the brush end closes cleanly instead of a flat cut
+      const pEnd = pts[to];
+      const hwEndR = pEnd.w * fades[to] * scale * pEnd.r[li] * (byPress ? pEnd.press : 1) * taperAt(to);
+      const endRx = pEnd.x - pEnd.nx * hwEndR;
+      const endRy = pEnd.y - pEnd.ny * hwEndR;
+      if (capEnd || to === total - 1) {
+        const tipDist = Math.max(0.6, hwEndR * (capEnd ? 1.35 : 0.75));
+        ctx.quadraticCurveTo(
+          pEnd.x + pEnd.ny * tipDist,
+          pEnd.y - pEnd.nx * tipDist,
+          endRx,
+          endRy,
+        );
+      } else {
+        ctx.lineTo(endRx, endRy);
+      }
+      px = endRx;
+      py = endRy;
+
+      for (let i = to - 1; i >= from; i--) {
         const p = pts[i];
-        const hw = p.w * fades[i] * scale * p.r[li] * (byPress ? p.press : 1);
+        const hw = p.w * fades[i] * scale * p.r[li] * (byPress ? p.press : 1) * taperAt(i);
         const x = p.x - p.nx * hw;
         const y = p.y - p.ny * hw;
-        if (i === to) ctx.lineTo(x, y);
-        else ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
+        ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
         px = x;
         py = y;
       }
       ctx.lineTo(px, py);
+
+      // Round off the starting tip when untrimmed
+      if (capStart && from === 0) {
+        const pStart = pts[from];
+        const hwStartL =
+          pStart.w * fades[from] * scale * pStart.l[li] * (byPress ? pStart.press : 1) * taperAt(from);
+        const startLx = pStart.x + pStart.nx * hwStartL;
+        const startLy = pStart.y + pStart.ny * hwStartL;
+        const tailDist = Math.max(0.6, hwStartL * 0.9);
+        ctx.quadraticCurveTo(
+          pStart.x - pStart.ny * tailDist,
+          pStart.y + pStart.nx * tailDist,
+          startLx,
+          startLy,
+        );
+      }
       ctx.closePath();
       ctx.fill();
     };
 
     /** dry-brush end: a few tapered hairs dragged out past the edge of the wash */
-    const streaks = (p: Pt, forward: number, rolls: number[], offset: number) => {
+    const streaks = (p: Pt, fade: number, forward: number, rolls: number[], offset: number) => {
       // direction of travel is perpendicular to the normal
       const dx = p.ny * forward;
       const dy = -p.nx * forward;
+      const w = p.w * fade;
+      if (w < 0.4) return;
       const hairs = 5;
       for (let j = 0; j < hairs; j++) {
         const r1 = rolls[offset + j * 2];
         const r2 = rolls[offset + j * 2 + 1];
         const across = ((j + 0.5) / hairs) * 2 - 1 + (r1 - 0.5) * 0.18;
-        const thick = p.w * (0.07 + r2 * 0.1);
-        const len = p.w * (0.35 + r1 * 1.05);
-        const bx = p.x + p.nx * p.w * across * 0.92;
-        const by = p.y + p.ny * p.w * across * 0.92;
+        const thick = w * (0.07 + r2 * 0.1);
+        const len = w * (0.4 + r1 * 1.1);
+        const bx = p.x + p.nx * w * across * 0.85;
+        const by = p.y + p.ny * w * across * 0.85;
         ctx.beginPath();
-        ctx.moveTo(bx + p.nx * thick - dx, by + p.ny * thick - dy);
+        ctx.moveTo(bx + p.nx * thick - dx * w * 0.35, by + p.ny * thick - dy * w * 0.35);
         ctx.lineTo(bx + dx * len, by + dy * len);
-        ctx.lineTo(bx - p.nx * thick - dx, by - p.ny * thick - dy);
+        ctx.lineTo(bx - p.nx * thick - dx * w * 0.35, by - p.ny * thick - dy * w * 0.35);
         ctx.closePath();
         ctx.fill();
       }
@@ -332,8 +395,38 @@ export default function PaintCanvas() {
       ctx.fill();
     };
 
-    const endStroke = () => {
-      if (active) active.ended = true;
+    /**
+     * Properly closes the active brush stroke by tapering its tip along the
+     * direction of travel so it lifts off cleanly rather than ending abruptly.
+     */
+    const endStroke = (now = performance.now()) => {
+      if (active && !active.ended) {
+        const pts = active.pts;
+        if (pts.length >= 2) {
+          const tail = pts[pts.length - 1];
+          const fx = tail.ny;
+          const fy = -tail.nx;
+          const steps = 3;
+          const stepLen = Math.max(1.8, tail.w * 0.45);
+          for (let s = 1; s <= steps; s++) {
+            const frac = 1 - s / (steps + 0.4);
+            active.travel += stepLen;
+            pts.push({
+              x: tail.x + fx * stepLen * s,
+              y: tail.y + fy * stepLen * s,
+              nx: tail.nx,
+              ny: tail.ny,
+              w: Math.max(0.5, tail.w * frac * frac),
+              press: tail.press * frac,
+              d: active.travel,
+              t: now,
+              l: tail.l,
+              r: tail.r,
+            });
+          }
+        }
+        active.ended = true;
+      }
       active = null;
     };
 
@@ -347,8 +440,16 @@ export default function PaintCanvas() {
       // paint lives in page space — shift it by the current scroll
       ctx.setTransform(dpr, 0, 0, dpr, -sx * dpr, -sy * dpr);
 
-      // resting long enough counts as lifting the brush: finish the stroke off
-      if (active && last && now - last.t > LIFT_MS) endStroke();
+      // resting long enough, or exceeding the varied unclicked stroke timeout,
+      // counts as lifting the brush: close the stroke properly
+      if (active && last) {
+        const idleTimedOut = now - last.t > active.liftMs;
+        const hoverTimedOut = !pressed && now >= active.closeAt;
+        if (idleTimedOut || hoverTimedOut) {
+          endStroke(now);
+          if (!pressed) resumeAt = now + rand(140, 520);
+        }
+      }
 
       let keep = 0;
       for (let s = 0; s < strokes.length; s++) {
@@ -390,13 +491,13 @@ export default function PaintCanvas() {
         // the faint line, full length
         for (let li = 0; li < LAYERS.length; li++) {
           ctx.globalAlpha = LAYERS[li].alpha * HOVER_STRENGTH * alpha;
-          ribbon(pts, fades, li, LAYERS[li].scale, false);
+          ribbon(pts, fades, li, LAYERS[li].scale, false, 0, pts.length - 1, !st.trimmed, st.ended);
         }
         // the bold wash, swelling out of it wherever the brush was pressed
         if (st.pressedEver) {
           for (let li = 0; li < LAYERS.length; li++) {
             ctx.globalAlpha = LAYERS[li].alpha * (1 - HOVER_STRENGTH) * alpha;
-            ribbon(pts, fades, li, LAYERS[li].scale, true);
+            ribbon(pts, fades, li, LAYERS[li].scale, true, 0, pts.length - 1, !st.trimmed, st.ended);
           }
         }
 
@@ -444,16 +545,22 @@ export default function PaintCanvas() {
         }
 
         // dry-brush ends: where the brush touched down, and where it lifted
-        const endStrength = (p: Pt) => 0.5 * alpha * (HOVER_STRENGTH + (1 - HOVER_STRENGTH) * p.press);
-        if (!st.trimmed && fades[0] === 1) {
-          ctx.globalAlpha = endStrength(pts[0]);
+        const endStrength = (p: Pt, f: number) =>
+          0.5 * alpha * f * (HOVER_STRENGTH + (1 - HOVER_STRENGTH) * p.press);
+        if (!st.trimmed && fades[0] > 0.05) {
+          ctx.globalAlpha = endStrength(pts[0], fades[0]);
           ctx.fillStyle = PIGMENTS[tailColour];
-          streaks(pts[0], -1, st.rolls, 0);
+          streaks(pts[0], fades[0], -1, st.rolls, 0);
         }
-        if (st.ended && fades[pts.length - 1] === 1) {
-          ctx.globalAlpha = endStrength(head);
-          ctx.fillStyle = PIGMENTS[headColour];
-          streaks(head, 1, st.rolls, 12);
+        if (st.ended) {
+          const anchorIdx = Math.max(0, pts.length - 4);
+          const anchor = pts[anchorIdx];
+          const anchorFade = fades[anchorIdx];
+          if (anchorFade > 0.05) {
+            ctx.globalAlpha = endStrength(anchor, anchorFade);
+            ctx.fillStyle = PIGMENTS[headColour];
+            streaks(anchor, anchorFade, 1, st.rolls, 12);
+          }
         }
 
         // stray droplets beside the stroke
@@ -479,37 +586,69 @@ export default function PaintCanvas() {
           }
         }
 
-        // dry streaks: lift the paint back off in a thin line along the stroke
+        // dry streaks: lift the paint back off along the stroke. Each one opens
+        // from nothing, swells and pinches unevenly on both sides, scales with
+        // the brush width, and closes again, so it is dynamic and never a
+        // constant-width line.
         if (st.gaps.length) {
           ctx.globalCompositeOperation = "destination-out";
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
           for (let g = 0; g < st.gaps.length; g++) {
             const gap = st.gaps[g];
-            let started = false;
-            let px = 0;
-            let py = 0;
-            ctx.beginPath();
+            const span = gap.d1 - gap.d0;
+            const xs: number[] = [];
+            const ys: number[] = [];
+            const nxs: number[] = [];
+            const nys: number[] = [];
+            const hLs: number[] = [];
+            const hRs: number[] = [];
             for (let i = 0; i < pts.length; i++) {
               const q = pts[i];
               if (q.d < gap.d0 || q.d > gap.d1) continue;
-              const reach = q.w * fades[i] * gap.off;
-              const x = q.x + q.nx * reach;
-              const y = q.y + q.ny * reach;
-              if (!started) {
-                ctx.moveTo(x, y);
-                started = true;
-              } else {
-                ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
-              }
+              const along = (q.d - gap.d0) / span;
+              const wanderOff =
+                gap.off + gap.drift * Math.sin(along * Math.PI * 2 + gap.phase);
+              const reach = q.w * fades[i] * wanderOff;
+              const envelope = Math.pow(Math.sin(Math.PI * along), 0.75); // closed at both ends
+              const w1 = Math.sin(q.d * gap.freq + gap.phase);
+              const w2 = Math.sin(q.d * gap.freq2 - gap.phase * 1.7);
+              const pinch = Math.max(0.08, 0.5 + 0.5 * Math.sin(q.d * gap.freq * 0.65 + gap.phase * 0.5));
+              const wobbleL = Math.max(0.06, (0.2 + 0.95 * Math.abs(w1)) * pinch);
+              const wobbleR = Math.max(0.06, (0.2 + 0.95 * Math.abs(w2)) * pinch);
+              const baseHalf = Math.max(gap.th * 0.5, q.w * gap.ratio * 0.5) * envelope * fades[i];
+              xs.push(q.x + q.nx * reach);
+              ys.push(q.y + q.ny * reach);
+              nxs.push(q.nx);
+              nys.push(q.ny);
+              hLs.push(baseHalf * wobbleL);
+              hRs.push(baseHalf * wobbleR);
+            }
+            const m = xs.length;
+            if (m < 2) continue;
+
+            let px = 0;
+            let py = 0;
+            ctx.beginPath();
+            for (let i = 0; i < m; i++) {
+              const x = xs[i] + nxs[i] * hLs[i];
+              const y = ys[i] + nys[i] * hLs[i];
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
               px = x;
               py = y;
             }
-            if (!started) continue;
             ctx.lineTo(px, py);
+            for (let i = m - 1; i >= 0; i--) {
+              const x = xs[i] - nxs[i] * hRs[i];
+              const y = ys[i] - nys[i] * hRs[i];
+              if (i === m - 1) ctx.lineTo(x, y);
+              else ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
+              px = x;
+              py = y;
+            }
+            ctx.lineTo(px, py);
+            ctx.closePath();
             ctx.globalAlpha = gap.o;
-            ctx.lineWidth = gap.th;
-            ctx.stroke();
+            ctx.fill();
           }
         }
       }
@@ -552,8 +691,12 @@ export default function PaintCanvas() {
       pigment = next;
     };
 
-    const beginStroke = () => {
-      endStroke();
+    const beginStroke = (now = performance.now()) => {
+      endStroke(now);
+      // Vary both the idle pause timeout and the unclicked hover duration so
+      // unclicked movement breaks naturally into varied-length strokes.
+      const shortRun = Math.random() < 0.35;
+      const hoverLife = shortRun ? rand(180, 460) : rand(480, 1250);
       active = {
         pts: [],
         c: pigment,
@@ -569,8 +712,10 @@ export default function PaintCanvas() {
         travel: 0,
         nextBlot: rand(20, 60),
         nextDot: rand(30, 120),
-        nextGap: rand(60, 260),
+        nextGap: rand(45, 220),
         nextHue: rand(480, 1400),
+        liftMs: pressed ? rand(650, 1100) : rand(160, 620),
+        closeAt: now + hoverLife,
       };
       strokes.push(active);
     };
@@ -629,23 +774,29 @@ export default function PaintCanvas() {
         st.nextBlot = st.travel + (press > 0.6 ? rand(40, 95) : rand(120, 420));
       }
 
-      // now and then the brush runs dry and leaves a thin unpainted streak
+      // now and then the brush runs dry and leaves an unpainted streak of varying width
       if (st.travel >= st.nextGap) {
-        const streaks = Math.random() < 0.3 ? 2 : 1;
+        const streaks = Math.random() < 0.35 ? 2 : 1;
         let longest = 0;
         for (let i = 0; i < streaks; i++) {
-          const len = rand(40, 240);
+          const len = rand(36, 240);
           longest = Math.max(longest, len);
+          const ratio = rand(0.16, 0.64);
           st.gaps.push({
-            d0: st.travel + rand(0, 30),
+            d0: st.travel + rand(0, 28),
             d1: st.travel + len,
-            off: rand(-0.62, 0.62),
-            th: Math.max(0.7, width * rand(0.05, 0.2)),
-            o: rand(0.45, 0.95),
+            off: rand(-0.55, 0.55),
+            drift: rand(-0.22, 0.22),
+            th: Math.max(0.8, width * ratio),
+            ratio,
+            o: rand(0.5, 0.96),
+            phase: rand(0, Math.PI * 2),
+            freq: rand(0.025, 0.085),
+            freq2: rand(0.04, 0.13),
           });
         }
         // irregular: sometimes back to back, sometimes a long clean run
-        st.nextGap = st.travel + longest + rand(30, 520);
+        st.nextGap = st.travel + longest + rand(25, 480);
       }
 
       // stray droplets beside the stroke: irregular, small, easy to miss
@@ -684,13 +835,34 @@ export default function PaintCanvas() {
     };
 
     const moveTo = (x: number, y: number, now: number) => {
-      if (!last || !active || now - last.t > LIFT_MS) {
+      // When not clicked, close the active stroke once its varied time is up
+      // and wait out a varied pause so the hover brush is not continuous.
+      if (!pressed) {
+        if (active && now >= active.closeAt) {
+          endStroke(now);
+          resumeAt = now + rand(140, 520);
+          last = { x, y, t: now };
+          return;
+        }
+        if (now < resumeAt) {
+          last = { x, y, t: now };
+          return;
+        }
+      }
+
+      if (!last || !active || now - last.t > active.liftMs) {
+        if (active && last && now - last.t > active.liftMs && !pressed) {
+          endStroke(now);
+          resumeAt = now + rand(120, 420);
+          last = { x, y, t: now };
+          return;
+        }
         // brush was lifted — new colour, new stroke
         dip();
         last = { x, y, t: now };
         press = pressed ? 1 : 0;
         width = pressed ? 9 : 3;
-        beginStroke();
+        beginStroke(now);
         return;
       }
 
@@ -702,7 +874,7 @@ export default function PaintCanvas() {
       if (dist > 280) {
         // jumped (e.g. re-entered the window) — don't draw a line across
         last = { x, y, t: now };
-        beginStroke();
+        beginStroke(now);
         return;
       }
 
@@ -777,10 +949,20 @@ export default function PaintCanvas() {
         return;
       }
       if (e.button !== 0) return;
+      const now = performance.now();
       pressed = true;
+      resumeAt = 0;
+      if (active) active.liftMs = rand(650, 1100);
       // dragging to paint shouldn't select the page text
       document.documentElement.classList.add("is-painting");
       splash(e.clientX + window.scrollX, e.clientY + window.scrollY);
+      if (!active) {
+        dip();
+        last = { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY, t: now };
+        press = 1;
+        width = 9;
+        beginStroke(now);
+      }
     };
 
     /** touch screens: each tap drops a splash in a fresh colour */
@@ -796,7 +978,15 @@ export default function PaintCanvas() {
 
     const onUp = (e?: Event) => {
       if (e instanceof PointerEvent) onTouchUp(e);
-      pressed = false;
+      if (pressed) {
+        const now = performance.now();
+        pressed = false;
+        endStroke(now);
+        resumeAt = now + rand(160, 480);
+        kick();
+      } else {
+        pressed = false;
+      }
       document.documentElement.classList.remove("is-painting");
     };
 
@@ -808,7 +998,8 @@ export default function PaintCanvas() {
     const onLeave = () => {
       last = null;
       pointer = null;
-      endStroke();
+      endStroke(performance.now());
+      kick();
     };
 
     /** the page slid under a resting brush — that paints too, and old paint moves with it */
