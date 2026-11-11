@@ -38,3 +38,6 @@ dist-ssr
 # OS generated files
 Thumbs.db
 .DS_Store
+
+# Claude Code local config
+.claude/
