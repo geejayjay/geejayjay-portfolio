@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import { useTheme } from "@/hooks/ThemeContext";
+import { Page, Reveal, SectionHeading } from "./Page";
 
 type TabType = "experience" | "education" | "certification";
 
@@ -11,7 +12,6 @@ type InfoCardProps = {
   period: string;
   description?: string;
   tags: string[];
-  tagColor: string;
   url?: string;
 };
 
@@ -97,30 +97,21 @@ const certificationData = [
 ];
 
 // --- Reusable Card Component ---
-const InfoCard = ({
-  title,
-  subtitle,
-  period,
-  description,
-  tags,
-  tagColor,
-  url,
-}: InfoCardProps) => (
-  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700/60 p-6 relative z-20 transition-colors duration-500">
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+const InfoCard = ({ title, subtitle, period, description, tags, url }: InfoCardProps) => (
+  <article className="surface p-6">
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
-        <p className="text-orange-600 dark:text-cyan-400 font-medium">{subtitle}</p>
+        <h3 className="font-display text-xl font-semibold text-ink">{title}</h3>
+        <p className="font-medium text-brand">{subtitle}</p>
       </div>
-
-      <div className="flex flex-col items-start md:items-end gap-1 z-20">
-        <span className="text-gray-500 dark:text-gray-400 text-sm">{period}</span>
+      <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
+        <span className="whitespace-nowrap text-sm text-soft">{period}</span>
         {url && (
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-cyan-400 hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand3 hover:underline"
           >
             Show credential
             <ArrowUpRight size={16} />
@@ -130,117 +121,99 @@ const InfoCard = ({
     </div>
 
     {description && (
-      <p className="text-gray-600 dark:text-gray-300 mb-4 whitespace-pre-line">{description}</p>
+      <p className="mt-4 whitespace-pre-line leading-relaxed text-soft">{description}</p>
     )}
 
-    <div className="flex flex-wrap gap-2 mb-4">
-      {tags.map((tag, i) => (
-        <span
-          key={i}
-          className={cn(
-            "px-3 py-1 text-sm rounded-full transition-colors",
-            tagColor === "blue" && "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-            tagColor === "green" && "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-            tagColor === "purple" && "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
-            tagColor === "orange" && "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-            tagColor === "indigo" && "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300"
-          )}
-        >
-          {tag}
-        </span>
-      ))}
-    </div>
-  </div>
+    {tags.length > 0 && (
+      <div className="mt-4 flex flex-wrap gap-2">
+        {tags.map((tag) => (
+          <span key={tag} className="chip">
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </article>
 );
+
+const tabs: { id: TabType; label: string; file: string }[] = [
+  { id: "experience", label: "Experience", file: "experience.ts" },
+  { id: "education", label: "Education", file: "education.md" },
+  { id: "certification", label: "Licenses & Certs", file: "licenses.json" },
+];
 
 // --- Main Component ---
 export default function AboutSection() {
   const [activeTab, setActiveTab] = useState<TabType>("experience");
-  const { theme } = useTheme();
+  const { isDark } = useTheme();
 
-  const tabs = [
-    { id: "experience", label: "Work Experience" },
-    { id: "education", label: "Education" },
-    { id: "certification", label: "License/Certification" },
-  ] as const;
-
-  const isDark = theme === "dark";
+  const cards: InfoCardProps[] =
+    activeTab === "experience"
+      ? experienceData.map((d) => ({ ...d, subtitle: d.company }))
+      : activeTab === "education"
+        ? educationData.map((d) => ({ ...d, subtitle: d.school }))
+        : certificationData.map((d) => ({ ...d, subtitle: d.issuer }));
 
   return (
-    <section id="about" className="px-6 py-16 md:px-12 lg:px-16 bg-white dark:bg-[hsl(220,20%,6%)] transition-colors duration-500">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h2
-            className="text-4xl md:text-5xl font-bold mb-4"
-            style={{ color: isDark ? "#00D4FF" : "#2C4848" }}
+    <Page id="about">
+      <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+        <Reveal className="lg:sticky lg:top-28 lg:self-start">
+          <SectionHeading note="a little about me" comment="// 02 — about" title="About Me">
+            I'm a passionate tech enthusiast skilled in web/software development, graphic design,
+            electronics engineering, and embedded systems with Raspberry Pi and Arduino. I'm
+            currently diving into Machine Learning and AI to grow my future skill set.
+          </SectionHeading>
+        </Reveal>
+
+        <Reveal delay={0.12}>
+          {/* Tabs */}
+          <div
+            role="tablist"
+            className={cn(
+              "mb-6 flex flex-wrap",
+              isDark ? "gap-1 border-b border-brand/20" : "gap-x-7 gap-y-2",
+            )}
           >
-            About Me
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            I'm a passionate tech enthusiast skilled in web/software development, graphic design, electronics engineering, and embedded systems with Raspberry Pi and Arduino. I'm currently diving into Machine Learning and AI to grow my future skill set.
-          </p>
-        </div>
+            {tabs.map((tab) => {
+              const on = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "relative transition-colors",
+                    isDark
+                      ? cn(
+                          "rounded-t-md border border-b-0 px-4 py-2 font-mono text-xs",
+                          on
+                            ? "border-brand/30 bg-brand/10 text-brand"
+                            : "border-transparent text-soft hover:text-ink",
+                        )
+                      : cn(
+                          "pb-2 font-hand text-2xl",
+                          on ? "text-brand" : "text-soft hover:text-ink",
+                        ),
+                  )}
+                >
+                  {isDark ? tab.file : tab.label}
+                  {!isDark && on && (
+                    <span className="absolute inset-x-0 bottom-0 h-[5px] -rotate-1 rounded-full bg-brand2/70" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap justify-center mb-8 border-b border-gray-200 dark:border-gray-700">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-                activeTab === tab.id
-                  ? isDark
-                    ? "border-cyan-400 text-cyan-400"
-                    : "border-coral-500 text-coral-600"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="min-h-[400px] space-y-8">
-          {activeTab === "experience" &&
-            experienceData.map((item, idx) => (
-              <InfoCard
-                key={idx}
-                title={item.title}
-                subtitle={item.company}
-                period={item.period}
-                description={item.description}
-                tags={item.tags}
-                tagColor={item.tagColor}
-              />
+          {/* Tab Content */}
+          <div key={activeTab} role="tabpanel" className="rise-in space-y-5 lg:min-h-[26rem]">
+            {cards.map((card) => (
+              <InfoCard key={card.title} {...card} />
             ))}
-          {activeTab === "education" &&
-            educationData.map((item, idx) => (
-              <InfoCard
-                key={idx}
-                title={item.title}
-                subtitle={item.school}
-                period={item.period}
-                description={item.description}
-                tags={item.tags}
-                tagColor={item.tagColor}
-              />
-            ))}
-          {activeTab === "certification" &&
-            certificationData.map((item, idx) => (
-              <InfoCard
-                key={idx}
-                title={item.title}
-                subtitle={item.issuer}
-                period={item.period}
-                tags={item.tags}
-                tagColor={item.tagColor}
-                url={item.url}
-              />
-            ))}
-        </div>
+          </div>
+        </Reveal>
       </div>
-    </section>
+    </Page>
   );
 }

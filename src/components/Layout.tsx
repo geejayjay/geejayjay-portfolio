@@ -1,198 +1,252 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "./ThemeToggle";
+import PaintCanvas from "./PaintCanvas";
+import CodeBackdrop from "./CodeBackdrop";
+import { socialLinks } from "./socialLinks";
 import { useTheme } from "@/hooks/ThemeContext";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const navLinks = [
-  { label: "Home", section: null },
-  { label: "About", section: "about" },
-  { label: "Skills", section: "skills" },
-  { label: "Work", section: "work" },
-  { label: "Contact Me!", section: "contact", isContact: true },
+const pages = [
+  { id: "home", label: "Home" },
+  { id: "about", label: "About" },
+  { id: "skills", label: "Skills" },
+  { id: "work", label: "Work" },
+  { id: "contact", label: "Contact" },
 ];
 
-const socialLinks = [
-  {
-    href: "https://www.linkedin.com/in/jason-jay-gurang-b03668183/",
-    label: "LinkedIn",
-    icon: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-      </svg>
-    ),
-  },
-  {
-    href: "https://www.instagram.com/geejayjay13/",
-    label: "Instagram",
-    icon: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.974.974 1.246 2.241 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.974.974-2.241 1.246-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.974-.974-1.246-2.241-1.308-3.608C2.175 15.647 2.163 15.267 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608C4.515 2.567 5.782 2.295 7.148 2.233 8.414 2.175 8.794 2.163 12 2.163zm0-2.163C8.741 0 8.332.013 7.052.072 5.771.131 4.659.363 3.678 1.344c-.98.98-1.213 2.092-1.272 3.373C2.013 8.332 2 8.741 2 12c0 3.259.013 3.668.072 4.948.059 1.281.292 2.393 1.272 3.373.98.98 2.092 1.213 3.373 1.272C8.332 23.987 8.741 24 12 24s3.668-.013 4.948-.072c1.281-.059 2.393-.292 3.373-1.272.98-.98 1.213-2.092 1.272-3.373.059-1.28.072-1.689.072-4.948 0-3.259-.013-3.668-.072-4.948-.059-1.281-.292-2.393-1.272-3.373-.98-.98-2.092-1.213-3.373-1.272C15.668.013 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a3.999 3.999 0 110-7.998 3.999 3.999 0 010 7.998zm6.406-11.845a1.44 1.44 0 11-2.88 0 1.44 1.44 0 012.88 0z"/>
-      </svg>
-    ),
-  },
-  {
-    href: "https://www.facebook.com/jason.jay.gurang.2024",
-    label: "Facebook",
-    icon: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24H12.82v-9.294H9.692v-3.622h3.127V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0"/>
-      </svg>
-    ),
-  },
-];
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export default function Layout({ children }: LayoutProps) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme } = useTheme();
+  const [active, setActive] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { isDark } = useTheme();
 
+  // Track which page the reader is on: the last section whose top has passed
+  // the middle of the viewport. Measured on scroll so it can never lag behind.
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 10);
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const middle = window.innerHeight / 2;
+      let current = 0;
+      pages.forEach((p, i) => {
+        const el = document.getElementById(p.id);
+        if (el && el.getBoundingClientRect().top <= middle) current = i;
+      });
+      // at the very bottom the last page counts, even if it is a short one
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      setActive(atBottom ? pages.length - 1 : current);
     };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
-  const scrollToSection = (sectionId: string | null) => {
-    setMobileOpen(false);
-    if (!sectionId) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  const goTo = (id: string) => {
+    setMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[hsl(220,20%,6%)] transition-colors duration-600">
-      <nav
-        className={cn(
-          "flex items-center justify-between px-6 py-4 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-all duration-300",
-          scrolled
-            ? "bg-gray-50/95 dark:bg-[hsl(220,20%,6%)]/95 backdrop-blur border-gray-100 dark:border-gray-800"
-            : "bg-transparent border-transparent"
+    <div className="relative min-h-screen overflow-x-clip">
+      {/* ---------- Backdrop (fixed, behind everything) ---------- */}
+      <div aria-hidden="true" className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        {isDark ? (
+          <>
+            <div className="dev-grid absolute inset-0" />
+            <div className="absolute -left-40 -top-40 h-[36rem] w-[36rem] rounded-full bg-brand/10 blur-[120px]" />
+            <div className="absolute -bottom-52 -right-40 h-[38rem] w-[38rem] rounded-full bg-brand3/10 blur-[130px]" />
+          </>
+        ) : (
+          <>
+            <div className="wash -left-32 -top-24 h-[34rem] w-[34rem] bg-brand/20" />
+            <div
+              className="wash -right-40 top-1/3 h-[38rem] w-[38rem] bg-brand2/25"
+              style={{ animationDelay: "-8s" }}
+            />
+            <div
+              className="wash -bottom-40 left-1/4 h-[30rem] w-[30rem] bg-brand3/20"
+              style={{ animationDelay: "-14s" }}
+            />
+            <div className="paper-grain absolute inset-0" />
+          </>
         )}
-      >
-        {/* Logo */}
-        <button
-          onClick={() => scrollToSection(null)}
-          className="flex items-center"
-        >
-          <img
-            src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
-            alt="Logo"
-            className="h-8 w-auto transition-all duration-300"
-            style={{ maxHeight: "2rem" }}
-          />
-          <span className="ml-[-0.5rem] mb-3 text-lg font-semibold transition-colors sketchy-text">
-            <span className={theme === "dark" ? "text-cyan-400" : ""} style={theme === "light" ? { color: "#CF6C58" } : {}}>ee</span>
-            <span className={theme === "dark" ? "text-emerald-400" : ""} style={theme === "light" ? { color: "#5f9d9dff" } : {}}>jay</span>
-            <span className={theme === "dark" ? "text-cyan-300" : ""} style={theme === "light" ? { color: "#D3A658" } : {}}>jay</span>
+      </div>
+      {isDark ? <CodeBackdrop /> : <PaintCanvas />}
+
+      {/* ---------- Top bar ---------- */}
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-5 py-4 sm:px-8 md:px-10">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-paper via-paper/70 to-transparent pointer-events-none"
+        />
+        <button onClick={() => goTo("home")} className="flex items-center" aria-label="Back to top">
+          <img src={isDark ? "/logo-dark.png" : "/logo-light.png"} alt="" className="h-9 w-auto" />
+          <span
+            className={cn(
+              "-ml-2 mb-2 text-lg font-semibold",
+              isDark ? "font-mono text-base" : "font-display",
+            )}
+          >
+            <span className="text-brand">ee</span>
+            <span className="text-brand3">jay</span>
+            <span className="text-brand2">jay</span>
           </span>
         </button>
 
-        {/* Desktop nav links */}
-        <div className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              onClick={() => scrollToSection(link.section)}
-              className={cn(
-                "text-base text-left transition-all sketchy-text",
-                link.isContact
-                  ? "bg-coral-500 dark:bg-cyan-500 hover:bg-coral-600 dark:hover:bg-cyan-600 text-white font-bold px-5 py-1.5 rounded-lg transform hover:scale-105 shadow-lg sketchy-button animate-fade-in"
-                  : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              )}
-              style={link.isContact ? { animationDuration: "1.2s", animationIterationCount: "1", animationTimingFunction: "ease-in", opacity: 0.92 } : {}}
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Desktop: theme toggle + social links */}
-        <div className="hidden md:flex items-center space-x-4">
-          <ThemeToggle />
-          {socialLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-base"
-              aria-label={link.label}
-            >
-              {link.icon}
-            </a>
-          ))}
-        </div>
-
-        {/* Mobile menu button */}
-        <div className="md:hidden flex items-center space-x-2">
+        <div className="flex items-center gap-3 sm:gap-5">
+          <div className="hidden items-center gap-4 lg:flex">
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                className="text-soft transition-colors hover:text-brand"
+              >
+                {link.icon}
+              </a>
+            ))}
+          </div>
           <ThemeToggle />
           <button
-            className="text-gray-600 dark:text-gray-400"
-            onClick={() => setMobileOpen((open) => !open)}
-            aria-label="Open menu"
+            className="text-ink md:hidden"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round">
+              {menuOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h10" />}
             </svg>
           </button>
         </div>
-      </nav>
+      </header>
 
-      {/* Side nav overlay for mobile (right side) */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-30 dark:bg-opacity-50 transition-opacity"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
-          ></div>
-          {/* Side nav (right) */}
-          <div className="relative w-64 max-w-[80vw] h-full bg-white dark:bg-gray-900 bg-opacity-95 dark:bg-opacity-95 shadow-xl p-8 flex flex-col space-y-6">
-            {navLinks.map((link) => (
-              <button
-                key={link.label}
-                onClick={() => scrollToSection(link.section)}
+      {/* ---------- Page rail (desktop) ---------- */}
+      <nav
+        aria-label="Sections"
+        className="fixed right-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-5 md:flex lg:right-8"
+      >
+        {pages.map((p, i) => {
+          const on = i === active;
+          return (
+            <button
+              key={p.id}
+              onClick={() => goTo(p.id)}
+              aria-current={on ? "true" : undefined}
+              className="group flex items-center gap-3"
+            >
+              <span
                 className={cn(
-                  "text-lg text-left",
-                  link.isContact
-                    ? "text-coral-500 dark:text-cyan-400"
-                    : "text-gray-700 dark:text-gray-300"
+                  "transition-all duration-300",
+                  isDark ? "font-mono text-xs" : "font-hand text-xl leading-none",
+                  on
+                    ? "translate-x-0 text-brand opacity-100"
+                    : "translate-x-2 text-soft opacity-0 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:opacity-100",
                 )}
               >
-                {link.label}
-              </button>
-            ))}
-            <div className="flex space-x-4 pt-4">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  aria-label={link.label}
+                {isDark ? `${pad(i + 1)}.${p.label.toLowerCase()}` : p.label}
+              </span>
+              <span
+                className={cn(
+                  "block transition-all duration-300",
+                  isDark
+                    ? cn(
+                        "h-[3px]",
+                        on
+                          ? "w-8 bg-brand shadow-[0_0_10px_rgb(var(--c-accent))]"
+                          : "w-4 bg-soft/50 group-hover:bg-brand",
+                      )
+                    : cn(
+                        "rounded-[50%_45%_55%_48%]",
+                        on ? "h-4 w-4 bg-brand" : "h-2.5 w-2.5 bg-ink/25 group-hover:bg-brand",
+                      ),
+                )}
+              />
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* ---------- Page counter ---------- */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "fixed bottom-5 left-10 z-40 hidden text-soft md:block",
+          isDark ? "font-mono text-xs" : "font-hand text-xl",
+        )}
+      >
+        {isDark ? (
+          <>
+            [<span className="text-brand">{pad(active + 1)}</span>/{pad(pages.length)}]
+          </>
+        ) : (
+          <>
+            page <span className="text-brand">{active + 1}</span> of {pages.length}
+          </>
+        )}
+      </div>
+
+      {/* ---------- Full-screen menu (mobile) ---------- */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-30 flex flex-col justify-center bg-paper/95 px-8 backdrop-blur-md md:hidden">
+          <ul className="space-y-5">
+            {pages.map((p, i) => (
+              <li key={p.id} className="rise-in" style={{ animationDelay: `${i * 60}ms` }}>
+                <button
+                  onClick={() => goTo(p.id)}
+                  className={cn(
+                    "flex items-baseline gap-4 font-display text-4xl font-semibold",
+                    i === active ? "text-brand" : "text-ink",
+                  )}
                 >
-                  {link.icon}
-                </a>
-              ))}
-            </div>
+                  <span className={cn("text-soft", isDark ? "font-mono text-base" : "font-hand text-xl")}>
+                    {pad(i + 1)}
+                  </span>
+                  {p.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-12 flex gap-6">
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                className="text-soft hover:text-brand"
+              >
+                {link.icon}
+              </a>
+            ))}
           </div>
         </div>
       )}
 
-      <main>{children}</main>
+      <main className="relative z-10">{children}</main>
     </div>
   );
 }

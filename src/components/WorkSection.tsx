@@ -1,174 +1,146 @@
-import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/ThemeContext";
+import { Page, Reveal, SectionHeading } from "./Page";
 
-type ProjectType = "Web" | "AI" | "Graphic Design" | "Mobile" | "Embedded Systems" | "3D Modeling" 
+type ProjectType = "Web" | "AI" | "Graphic Design" | "Mobile" | "Embedded Systems" | "3D Modeling";
 
 type Project = {
   title: string;
   description: string;
-  type: ProjectType; 
-  tags: { label: string; color: string }[];
-  image?: string; 
+  type: ProjectType;
+  tags: string[];
+  image?: string;
   link?: string;
 };
 
 const projects: Project[] = [
-   {
+  {
     title: "AIPI Web Application",
-    description: "A web application for the AIPI project, a specialized application to store and manage models and data like OneDrive, do inference, track transaction records, and a lightweight CMS.",
+    description:
+      "A web application for the AIPI project, a specialized application to store and manage models and data like OneDrive, do inference, track transaction records, and a lightweight CMS.",
     type: "Web",
-    tags: [
-      { label: "Vue.js", color: "green" },
-      { label: "Node.js (Fastify)", color: "green" },
-      { label: "Typescript", color: "purple" },
-      { label: "PostgreSQL", color: "blue" },
-      { label: "Redis", color: "orange" },
-    ],
+    tags: ["Vue.js", "Node.js (Fastify)", "Typescript", "PostgreSQL", "Redis"],
     image: "/works/AIPI navigation.png",
   },
   {
     title: "3D Render of VEERS IOT",
     description: "A 3D visualization of a device used in the VEERS IOT capstone project.",
     type: "3D Modeling",
-    tags: [
-      { label: "TinkerCAD", color: "blue" },
-    ],
+    tags: ["TinkerCAD"],
     image: "/works/VEERS-IOT 3D Render.png",
   },
   {
     title: "Logo Design",
     description: "A logo design project for Printing All-Star Enterprise.",
     type: "Graphic Design",
-    tags: [
-      { label: "Photoshop", color: "blue" },
-    ],
+    tags: ["Photoshop"],
     image: "/works/PASE Logo.jpg",
-  }
- 
+  },
 ];
 
-
 const MAX_DISPLAY = 6;
+const tilts = ["lg:-rotate-[1.5deg]", "lg:rotate-1", "lg:-rotate-[0.75deg]"];
+
+const slug = (title: string) =>
+  title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
 export default function WorkSection() {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const { isDark } = useTheme();
 
   return (
-   <section id="work" className="px-6 py-16 md:px-12 lg:px-16 bg-gray-50 dark:bg-[hsl(220,20%,6%)] transition-colors duration-500">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: isDark ? "#00D4FF" : "#2C4848" }}>
-              My Work
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              A selection of my recent work showcasing my skills. Due to NDAs, many ASP.NET/C# projects can't be shared, and some only allow limited public UI previews.
-            </p>
-          </div>
+    <Page id="work">
+      <Reveal>
+        <SectionHeading note="things I've made" comment="// 04 — work" title="My Work">
+          A selection of my recent work. Due to NDAs, many ASP.NET/C# projects can't be shared, and
+          some only allow limited public UI previews.
+        </SectionHeading>
+      </Reveal>
 
-          {projects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.slice(0, MAX_DISPLAY).map((project, idx) => (
-                <div
-                  key={project.title + idx}
-                  className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl sketchy-card ${
-                    isDark
-                      ? "bg-gray-800/60 border-gray-700/60 hover:border-cyan-500/60"
-                      : "bg-white border-gray-200 hover:border-coral-400"
-                  }`}
-                >
-                  {/* Image Container */}
-                  <div className="relative aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
-                    {project.image ? (
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        className="w-full h-full object-contain bg-white dark:bg-gray-900 transition-transform duration-300 group-hover:scale-105"
-                        style={{ objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-
-                    {/* Project type badge */}
-                    <div className={`absolute top-3 left-3 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg ${
-                      isDark ? "bg-cyan-600" : "bg-teal-500"
-                    }`}>
-                      {project.type}
-                    </div>
-
-                    {/* Hover overlay */}
-                    <div className={`absolute inset-0 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4 ${
-                      isDark ? "bg-gray-900/90" : "bg-teal-500/90"
-                    }`}>
-                      <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
-                      <p className="text-sm mb-3 opacity-90">{project.description}</p>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-1 justify-center mb-3">
-                        {project.tags.map((tag) => (
-                          <span
-                            key={tag.label}
-                            className={cn(
-                              "px-2 py-1 text-xs rounded-full font-medium",
-                              isDark ? "bg-gray-700 text-cyan-300" : (
-                                tag.color === "blue" && "bg-blue-100 text-blue-800",
-                                tag.color === "emerald" && "bg-emerald-100 text-emerald-800",
-                                tag.color === "purple" && "bg-purple-100 text-purple-800",
-                                tag.color === "red" && "bg-red-100 text-red-800",
-                                tag.color === "yellow" && "bg-yellow-100 text-yellow-800",
-                                tag.color === "green" && "bg-green-100 text-green-800"
-                              )
-                            )}
-                          >
-                            {tag.label}
-                          </span>
-                        ))}
-                      </div>
-
-                      {project.link && (
-                        <a
-                          href={project.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-white font-medium hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          View Project
-                          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      )}
-                    </div>
+      {projects.length > 0 ? (
+        <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {projects.slice(0, MAX_DISPLAY).map((project, idx) => (
+            <Reveal key={project.title} delay={idx * 0.1}>
+              <article
+                className={
+                  "surface surface-hover group flex h-full flex-col " +
+                  (isDark ? "overflow-hidden" : `p-3 pb-5 ${tilts[idx % tilts.length]}`)
+                }
+              >
+                {isDark ? (
+                  // window chrome
+                  <div className="flex items-center gap-1.5 border-b border-brand/15 px-3 py-2.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+                    <span className="ml-2 truncate font-mono text-[0.7rem] text-soft">
+                      ~/work/{slug(project.title)}
+                    </span>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-24">
-              <div className="text-6xl text-gray-300 dark:text-gray-600 mb-4">🚧</div>
-              <h3 className="text-2xl font-semibold text-gray-400 dark:text-gray-500 mb-2">Projects Coming Soon</h3>
-              <p className="text-gray-500 dark:text-gray-600">Check back later for my latest work!</p>
-            </div>
-          )}
+                ) : (
+                  <span className="tape" aria-hidden="true" />
+                )}
 
-          {projects.length > MAX_DISPLAY && (
-            <div className="text-center mt-8">
-              <button className={`font-medium px-6 py-3 rounded-lg transition-colors shadow-lg hover:shadow-xl ${
-                isDark
-                  ? "bg-cyan-500 hover:bg-cyan-600 text-gray-900"
-                  : "bg-coral-500 hover:bg-coral-600 text-white"
-              }`}>
-                View All Projects →
-              </button>
-            </div>
-          )}
+                <div
+                  className={
+                    "relative aspect-[16/10] overflow-hidden bg-white " +
+                    (isDark
+                      ? ""
+                      : "rounded-[14px_18px_14px_20px/18px_14px_20px_14px] border border-ink/10")
+                  }
+                >
+                  {project.image && (
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      loading="lazy"
+                      className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                </div>
+
+                <div className={isDark ? "flex flex-1 flex-col p-5" : "flex flex-1 flex-col px-2 pt-4"}>
+                  <p
+                    className={
+                      isDark
+                        ? "font-mono text-[0.7rem] text-brand2"
+                        : "font-hand text-xl leading-none text-brand"
+                    }
+                  >
+                    {isDark ? `type: "${project.type}"` : project.type}
+                  </p>
+                  <h3 className="mt-1 font-display text-xl font-semibold text-ink">
+                    {project.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-soft">{project.description}</p>
+
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {project.tags.map((tag) => (
+                      <span key={tag} className="chip">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {project.link && (
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
+                    >
+                      View project ↗
+                    </a>
+                  )}
+                </div>
+              </article>
+            </Reveal>
+          ))}
         </div>
-      </section>
+      ) : (
+        <p className="mt-14 text-soft">Projects coming soon — check back later.</p>
+      )}
+    </Page>
   );
 }

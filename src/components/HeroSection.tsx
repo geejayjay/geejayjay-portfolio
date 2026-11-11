@@ -1,13 +1,25 @@
 import { useState, useEffect } from "react";
+import { Download, ArrowDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Download } from "lucide-react"; 
 import { useTheme } from "@/hooks/ThemeContext";
+import { Page } from "./Page";
+
+const titles: [string, string][] = [
+  ["Software", "Developer"],
+  ["Electronics", "Engineer"],
+];
 
 export default function HeroSection() {
-  const titles = ["Software\nDeveloper", "Electronics\nEngineer"];
-  const [currentTitle, setCurrentTitle] = useState(0);
+  const [current, setCurrent] = useState(0);
   const { toast } = useToast();
-  const { theme } = useTheme();
+  const { isDark } = useTheme();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % titles.length);
+    }, 3200);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDownload = () => {
     toast({
@@ -24,256 +36,164 @@ export default function HeroSection() {
     document.body.removeChild(link);
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTitle((prev) => (prev + 1) % titles.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const isDark = theme === "dark";
+  const [first, second] = titles[current];
 
   return (
-    <section
-      id="home"
-      className="min-h-[calc(100vh-4rem)] px-4 sm:px-8 md:px-16 lg:px-32 flex items-center"
-    >
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
-          {/* Left Content */}
-          <div className="space-y-6 flex flex-col items-center lg:items-start text-center lg:text-left">
-            <div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">
-                Hello, I'm{" "}
-                <span className="text-coral-500 dark:text-cyan-400 text-md font-medium">Jason Jay Gurang</span>,
-              </p>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                <span
-                  key={currentTitle}
-                  className="inline-block animate-fade-in whitespace-pre-line"
-                  style={{
-                    animation: "fadeInUp 0.8s ease-out",
-                    color: isDark ? "#00D4FF" : "#2C4848",
-                  }}
-                >
-                  {titles[currentTitle]}
-                </span>
-              </h1>
-            </div>
+    <Page id="home">
+      <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
+        {/* ---------- Words ---------- */}
+        <div className="order-2 text-center lg:order-1 lg:text-left">
+          <p className="eyebrow rise-in">
+            {isDark ? (
+              <>
+                <span className="text-soft">~/jason-jay-gurang</span> $ whoami
+              </>
+            ) : (
+              "hello, I'm Jason Jay Gurang —"
+            )}
+          </p>
 
-            <p className="text-gray-600 dark:text-gray-400 text-lg">based in Davao City.</p>
+          <h1 className="font-display text-[clamp(2.6rem,7.5vw,6rem)] font-semibold leading-[1.02] tracking-tight text-ink">
+            <span key={`${current}-${isDark}`} className="rise-in inline-block">
+              {first}
+              <br />
+              {isDark ? (
+                <>
+                  <span className="text-brand">{second}</span>
+                  <span className="caret">_</span>
+                </>
+              ) : (
+                <span className="swash italic">{second}</span>
+              )}
+            </span>
+          </h1>
 
-           <div className="pt-4">
-            <button
-              onClick={handleDownload}
-              className="relative group transition-all duration-300 outline-none"
-              style={{ boxShadow: "none" }}
-            >
-              {/* Out-of-position background */}
-              <span
-                className={`absolute top-[2px] left-[2px] w-full h-full rounded-lg transition-all duration-300 group-hover:top-0 group-hover:left-0 ${
-                  isDark ? "bg-cyan-900/50" : "bg-yellow-200"
-                }`}
-                aria-hidden="true"
-              ></span>
-              {/* Out-of-position border */}
-              <span
-                className={`absolute -top-[2px] -left-[2px] w-full h-full border rounded-lg transition-all duration-300 group-hover:top-0 group-hover:left-0 z-10 ${
-                  isDark ? "border-cyan-500/60" : "border-coral-400"
-                }`}
-                aria-hidden="true"
-              ></span>
-              {/* Resume text + icon */}
-              <span className={`relative z-20 flex items-center gap-2 text-lg px-10 py-2.5 font-medium rounded-lg transition-all duration-300 ${
-                isDark ? "text-cyan-400" : "text-coral-500"
-              }`}>
-                <Download className="w-5 h-5" />
-                Resume
-              </span>
+          <p className="mx-auto mt-7 max-w-lg text-lg leading-relaxed text-soft lg:mx-0">
+            {isDark ? (
+              <>
+                This is the <span className="text-ink">developer</span> in me — the one who cares how
+                things work. APIs, data and systems that stay fast and predictable.
+              </>
+            ) : (
+              <>
+                This is the <span className="text-ink">painter</span> in me — the one who cares how
+                things look and feel. Interfaces with a bit of colour and a lot of care.
+              </>
+            )}{" "}
+            Based in Davao City.
+          </p>
+
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+            <button onClick={handleDownload} className="btn btn-primary">
+              <Download className="h-5 w-5" />
+              {isDark ? "resume.pdf" : "Resume"}
             </button>
+            <a href="#work" className="btn btn-ghost">
+              {isDark ? "ls ./work" : "See my work"}
+            </a>
           </div>
-          </div>
 
-          {/* Right Content */}
-          <div className="flex justify-center lg:justify-end">
-            <div className="relative">
-              {/* Decorative Elements */}
-              {isDark ? (
-                <>
-                  {/* Dark mode: Code brackets and circuit traces */}
-                  <div className="absolute -top-4 -right-6 text-cyan-400 animate-pulse font-mono text-2xl font-bold opacity-60">
-                    {"{ }"}
-                  </div>
-                  <div className="absolute top-12 right-10 text-emerald-400 animate-bounce font-mono text-lg opacity-50">
-                    {"< />"}
-                  </div>
-                  <div className="absolute -bottom-6 -left-6 text-cyan-500 animate-pulse font-mono text-xl opacity-50">
-                    {"/>"}
-                  </div>
-                  {/* Circuit trace glows */}
-                  <div className="absolute -top-8 -left-8 w-16 h-16 bg-cyan-500 rounded-full opacity-10 animate-[ping_3s_ease-in-out_infinite]"></div>
-                  <div className="absolute -bottom-8 -right-8 w-12 h-12 bg-emerald-500 rounded-full opacity-10 animate-[pulse_4s_ease-in-out_infinite]"></div>
-                </>
-              ) : (
-                <>
-                  {/* Light mode: Original paint/artist decorations */}
-                  <div className="absolute -top-4 -right-6 text-coral-500 animate-pulse">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="4" y1="20" x2="10" y2="4" />
-                      <line x1="9" y1="20" x2="15" y2="4" />
-                      <line x1="14" y1="20" x2="20" y2="4" />
-                    </svg>
-                  </div>
-                  <div className="absolute top-12 right-10 text-golden-400 animate-bounce">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="4 8 12 16 20 8" />
-                    </svg>
-                  </div>
-                  <div className="absolute -bottom-6 -left-6 text-coral-500 animate-pulse">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="6" y1="20" x2="10" y2="4" />
-                      <line x1="12" y1="20" x2="16" y2="4" />
-                      <line x1="18" y1="20" x2="22" y2="4" />
-                    </svg>
-                  </div>
-                  {/* Paint splashes */}
-                  <div className="absolute -top-8 -left-8 w-16 h-16 bg-coral-200 rounded-full opacity-25 animate-[ping_2s_ease-in-out_infinite]"></div>
-                  <div className="absolute -bottom-8 -right-8 w-12 h-12 bg-golden-200 rounded-full opacity-30 animate-[pulse_3s_ease-in-out_infinite]"></div>
-                </>
-              )}
+          {/* hint about the cursor toy — only meaningful with a mouse */}
+          <p
+            className={
+              isDark
+                ? "mt-10 hidden font-mono text-xs text-soft lg:block"
+                : "mt-9 hidden -rotate-1 font-hand text-2xl text-brand3 lg:block"
+            }
+          >
+            {isDark
+              ? "// move your mouse — the source code follows"
+              : "psst… your cursor is a brush. hold click to paint ✦"}
+          </p>
+        </div>
 
-              {/* Profile Image with crossfade */}
-              <div className="relative w-80 h-80 md:w-96 md:h-96 flex items-center justify-center animate-fade-in" style={{ animationDuration: "1.2s" }}>
-                {/* Dirty white ambient glow behind dark profile for contrast */}
-                {isDark && (
-                  <div
-                    className="absolute inset-6 rounded-full bg-slate-100/15 blur-2xl pointer-events-none z-0 transition-opacity duration-700"
-                  />
-                )}
-
-                {/* In Dark Mode: Inner glow / white overlay inside the ellipse behind the profile (z-[2]) */}
-                {isDark && (
-                  <svg
-                    viewBox="0 0 320 300"
-                    className="absolute inset-0 w-full h-full pointer-events-none z-[2]"
-                  >
-                    <defs>
-                      <radialGradient id="darkProfileInnerGlow" cx="50%" cy="48%" r="50%">
-                        <stop offset="0%" stopColor="#F8FAFC" stopOpacity="0.32" />
-                        <stop offset="50%" stopColor="#E2E8F0" stopOpacity="0.20" />
-                        <stop offset="80%" stopColor="#CBD5E1" stopOpacity="0.08" />
-                        <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0" />
-                      </radialGradient>
-                    </defs>
-                    <ellipse
-                      cx="160"
-                      cy="150"
-                      rx="135"
-                      ry="120"
-                      fill="url(#darkProfileInnerGlow)"
-                      style={{ transform: "rotate(-18deg)", transformOrigin: "170px 150px" }}
-                    />
-                  </svg>
-                )}
-
-                {/* In Light Mode: Circle is BEHIND the image (zIndex: 1) */}
-                {!isDark && (
-                  <svg
-                    viewBox="0 0 320 300"
-                    className="absolute inset-0 w-full h-full pointer-events-none z-[1]"
-                    fill="none"
-                    stroke="#d97706"
-                    strokeWidth="0.7"
-                    style={{ transition: "stroke 0.6s ease" }}
-                  >
-                    <ellipse
-                      cx="160"
-                      cy="150"
-                      rx="135"
-                      ry="120"
-                      style={{ transform: "rotate(-18deg)", transformOrigin: "170px 150px" }}
-                    />
-                  </svg>
-                )}
-
-                {/* Light profile image (Artist / Painted Sketch Blob, z-10 above light circle) */}
-                <img
-                  src="/profile-light.png"
-                  alt="Jason Jay Gurang"
-                  className="absolute inset-0 w-full h-full object-contain z-10 transition-opacity duration-700 pointer-events-none select-none"
-                  style={{
-                    borderRadius: "48% 52% 50% 50% / 55% 45% 55% 45%",
-                    boxShadow: "0 0 0 0 transparent",
-                    opacity: isDark ? 0 : 1,
-                  }}
-                />
-
-                {/* Dark profile image (Dirty white inner glow/overlay so dark silhouette is clearly visible against dark bg) */}
-                <img
-                  src="/profile-dark.png"
-                  alt="Jason Jay Gurang"
-                  className="absolute inset-0 w-full h-full object-contain z-10 transition-opacity duration-700 pointer-events-none select-none"
-                  style={{
-                    opacity: isDark ? 1 : 0,
-                    filter: "drop-shadow(0 0 14px rgba(241, 245, 249, 0.45)) drop-shadow(0 0 24px rgba(226, 232, 240, 0.2))",
-                    maskImage: "linear-gradient(to bottom, black 82%, transparent 97%)",
-                    WebkitMaskImage: "linear-gradient(to bottom, black 82%, transparent 97%)",
-                  }}
-                />
-
-                {/* In Dark Mode: Circle is ABOVE / IN FRONT of image (z-20) to hide/frame the bottom cut */}
-                {isDark && (
-                  <svg
-                    viewBox="0 0 320 300"
-                    className="absolute inset-0 w-full h-full pointer-events-none z-20"
-                    fill="none"
-                    stroke="#00D4FF"
-                    strokeWidth="1"
-                    style={{ transition: "stroke 0.6s ease" }}
-                  >
-                    <ellipse
-                      cx="160"
-                      cy="150"
-                      rx="135"
-                      ry="120"
-                      style={{ transform: "rotate(-18deg)", transformOrigin: "170px 150px" }}
-                    />
-                  </svg>
-                )}
-              </div>
-
-              {/* Signature Lines / Circuit traces */}
-              {isDark ? (
-                <>
-                  <div className="absolute bottom-0 right-8 text-cyan-400 opacity-40">
-                    <svg className="w-20 h-10" viewBox="0 0 100 40" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M10,20 L30,20 L35,10 L40,30 L45,10 L50,30 L55,20 L90,20" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div className="absolute top-12 left-4 text-emerald-400 opacity-30">
-                    <svg className="w-12 h-6" viewBox="0 0 60 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M5,10 L15,10 L20,5 L25,15 L30,5 L35,15 L40,10 L55,10" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="absolute bottom-0 right-8 text-orange-400 animate-pulse">
-                    <svg className="w-20 h-10" viewBox="0 0 100 40" fill="none" stroke="currentColor" strokeWidth="3">
-                      <path d="M10,30 Q30,10 50,30 T90,30" strokeLinecap="round" className="sketchy-line" />
-                    </svg>
-                  </div>
-                  <div className="absolute top-12 left-4 text-yellow-400 opacity-60">
-                    <svg className="w-12 h-6" viewBox="0 0 60 20" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5,15 Q20,5 35,15 T55,15" strokeLinecap="round" className="sketchy-line" />
-                    </svg>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+        {/* ---------- Portrait ---------- */}
+        <div className="order-1 flex justify-center lg:order-2 lg:justify-end">
+          {isDark ? <DeveloperPortrait /> : <PainterPortrait />}
         </div>
       </div>
-    </section>
+
+      <a
+        href="#about"
+        aria-label="Scroll to About"
+        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1 text-soft transition-colors hover:text-brand md:flex"
+      >
+        <span className={isDark ? "font-mono text-[0.7rem]" : "font-hand text-lg"}>
+          {isDark ? "scroll()" : "scroll"}
+        </span>
+        <ArrowDown className="h-4 w-4 animate-bounce" />
+      </a>
+    </Page>
+  );
+}
+
+function PainterPortrait() {
+  return (
+    <div className="relative h-72 w-64 sm:h-96 sm:w-80 lg:h-[30rem] lg:w-[26rem]">
+      {/* paint pooled behind the portrait */}
+      <div className="blob absolute inset-[6%] bg-brand2/30" />
+      <div
+        className="blob absolute inset-[14%] translate-x-6 translate-y-4 bg-brand/15"
+        style={{ animationDelay: "-6s" }}
+      />
+      <div className="float-slow absolute -left-2 top-10 h-5 w-5 rounded-full bg-brand" />
+      <div
+        className="float-slow absolute bottom-16 right-0 h-3.5 w-3.5 rounded-full bg-brand3"
+        style={{ animationDelay: "-2s" }}
+      />
+      <div
+        className="float-slow absolute right-10 top-2 h-2.5 w-2.5 rounded-full bg-brand2"
+        style={{ animationDelay: "-4s" }}
+      />
+      <img
+        src="/profile-light.png"
+        alt="Painted portrait of Jason Jay Gurang"
+        className="rise-in relative z-10 h-full w-full select-none object-contain pointer-events-none"
+        draggable={false}
+      />
+      <span className="absolute -bottom-3 right-4 z-20 -rotate-6 font-hand text-3xl text-ink/70">
+        — jay
+      </span>
+    </div>
+  );
+}
+
+function DeveloperPortrait() {
+  const corner = "absolute h-5 w-5 border-brand";
+  return (
+    <div className="relative h-72 w-64 sm:h-96 sm:w-80 lg:h-[30rem] lg:w-[26rem]">
+      <div className="absolute inset-[12%] rounded-full bg-brand/20 blur-3xl" />
+      <div className="absolute inset-[18%] rounded-full bg-slate-100/10 blur-2xl" />
+      <img
+        src="/profile-dark.png"
+        alt="Portrait of Jason Jay Gurang"
+        className="rise-in relative z-10 h-full w-full select-none object-contain pointer-events-none"
+        style={{
+          filter: "drop-shadow(0 0 18px rgba(0, 212, 255, 0.35))",
+          maskImage: "linear-gradient(to bottom, black 78%, transparent 96%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 78%, transparent 96%)",
+        }}
+        draggable={false}
+      />
+      {/* detection box — a nod to the ML rabbit hole */}
+      <div className="absolute inset-x-[8%] bottom-[10%] top-[6%] z-20">
+        <span className={`${corner} left-0 top-0 border-l-2 border-t-2`} />
+        <span className={`${corner} right-0 top-0 border-r-2 border-t-2`} />
+        <span className={`${corner} bottom-0 left-0 border-b-2 border-l-2`} />
+        <span className={`${corner} bottom-0 right-0 border-b-2 border-r-2`} />
+        <span className="absolute -top-6 left-0 bg-brand px-1.5 py-0.5 font-mono text-[0.65rem] font-semibold text-paper">
+          developer 0.99
+        </span>
+      </div>
+      <span className="float-slow absolute -right-3 top-1/4 z-20 font-mono text-xl font-bold text-brand2/70">
+        {"{ }"}
+      </span>
+      <span
+        className="float-slow absolute -left-4 bottom-1/4 z-20 font-mono text-lg font-bold text-brand/70"
+        style={{ animationDelay: "-3s" }}
+      >
+        {"</>"}
+      </span>
+    </div>
   );
 }

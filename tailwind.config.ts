@@ -13,7 +13,20 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"DM Sans"', "system-ui", "sans-serif"],
+        display: ["var(--font-display)"],
+        hand: ['"Caveat"', "cursive"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
+      },
       colors: {
+        /* Persona-aware tokens (Painter in light, Developer in dark) */
+        paper: "rgb(var(--c-bg) / <alpha-value>)",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        soft: "rgb(var(--c-soft) / <alpha-value>)",
+        brand: "rgb(var(--c-accent) / <alpha-value>)",
+        brand2: "rgb(var(--c-accent2) / <alpha-value>)",
+        brand3: "rgb(var(--c-accent3) / <alpha-value>)",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

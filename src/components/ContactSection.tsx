@@ -1,14 +1,26 @@
-import { useRef, useState } from 'react';
-import emailjs from '@emailjs/browser';
+import { useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
+import { Mail, MapPin, Phone, Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/hooks/ThemeContext";
+import { Page, Reveal, SectionHeading } from "./Page";
+
+const details = [
+  {
+    icon: Mail,
+    label: "Email",
+    value: "gurangjayjason@gmail.com",
+    href: "mailto:gurangjayjason@gmail.com",
+  },
+  { icon: MapPin, label: "Location", value: "Davao City, Philippines" },
+  { icon: Phone, label: "Phone", value: "+63 947 739 7934", href: "tel:+639477397934" },
+];
 
 export default function ContactSection() {
   const formRef = useRef<HTMLFormElement | null>(null);
   const { toast } = useToast();
   const [isSending, setIsSending] = useState(false);
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const { isDark } = useTheme();
 
   const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,7 +31,7 @@ export default function ContactSection() {
         import.meta.env.VITE_EMAILJS_SERVICE_ID!,
         import.meta.env.VITE_EMAILJS_TEMPLATE_ID!,
         formRef.current!,
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY!
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY!,
       );
 
       toast({
@@ -41,133 +53,112 @@ export default function ContactSection() {
     }
   };
 
+  const labelClass = isDark
+    ? "mb-2 block font-mono text-xs text-brand2"
+    : "mb-1 block font-hand text-xl text-ink";
+
   return (
-    <section id="contact" className="px-6 py-16 md:px-12 lg:px-16 bg-white dark:bg-[hsl(220,18%,8%)] transition-colors duration-500">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h2
-            className="text-4xl md:text-5xl font-bold mb-4"
-            style={{ color: isDark ? "#00D4FF" : "#2C4848" }}
-          >
-            Contact Me
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+    <Page id="contact">
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+        <Reveal>
+          <SectionHeading note="say hello" comment="// 05 — contact" title="Let's Talk">
             Let's work together! I'm always interested in new opportunities and exciting projects.
-          </p>
-        </div>
+          </SectionHeading>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Contact Info */}
-          <div className="space-y-6">
-            {/* Email */}
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-lg ${isDark ? "bg-cyan-900/30" : "bg-orange-100"}`}>
-                <svg className={`w-6 h-6 ${isDark ? "text-cyan-400" : "text-orange-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Email</h3>
-                <p className="text-gray-600 dark:text-gray-400">gurangjayjason@gmail.com</p>
-              </div>
-            </div>
+          <ul className="mt-10 space-y-5">
+            {details.map(({ icon: Icon, label, value, href }) => (
+              <li key={label} className="flex items-center gap-4">
+                <span
+                  className={
+                    "flex h-12 w-12 shrink-0 items-center justify-center text-brand " +
+                    (isDark
+                      ? "rounded-md border border-brand/25 bg-brand/5"
+                      : "rounded-[50%_44%_56%_46%] bg-brand2/30")
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className={isDark ? "font-mono text-xs text-soft" : "text-sm text-soft"}>
+                    {isDark ? `${label.toLowerCase()}:` : label}
+                  </p>
+                  {href ? (
+                    <a
+                      href={href}
+                      className="font-medium text-ink transition-colors hover:text-brand"
+                    >
+                      {value}
+                    </a>
+                  ) : (
+                    <p className="font-medium text-ink">{value}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
 
-            {/* Location */}
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-lg ${isDark ? "bg-cyan-900/30" : "bg-orange-100"}`}>
-                <svg className={`w-6 h-6 ${isDark ? "text-cyan-400" : "text-orange-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Location</h3>
-                <p className="text-gray-600 dark:text-gray-400">Davao City, Philippines</p>
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-lg ${isDark ? "bg-cyan-900/30" : "bg-orange-100"}`}>
-                <svg className={`w-6 h-6 ${isDark ? "text-cyan-400" : "text-orange-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Phone</h3>
-                <p className="text-gray-600 dark:text-gray-400">+63 947 739 7934</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <form ref={formRef} onSubmit={sendEmail} className="space-y-6">
+        <Reveal delay={0.12}>
+          <form ref={formRef} onSubmit={sendEmail} className="surface space-y-5 p-6 sm:p-8">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+              <label htmlFor="name" className={labelClass}>
+                {isDark ? "name:" : "Your name"}
+              </label>
               <input
                 type="text"
                 name="name"
                 id="name"
                 required
-                className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:border-transparent transition-colors ${
-                  isDark
-                    ? "bg-gray-800 border border-gray-700 text-gray-100 placeholder-gray-500 focus:ring-cyan-500"
-                    : "border border-gray-300 focus:ring-orange-500"
-                }`}
+                className="field"
                 placeholder="Your name"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+              <label htmlFor="email" className={labelClass}>
+                {isDark ? "email:" : "Your email"}
+              </label>
               <input
                 type="email"
                 name="email"
                 id="email"
                 required
-                className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:border-transparent transition-colors ${
-                  isDark
-                    ? "bg-gray-800 border border-gray-700 text-gray-100 placeholder-gray-500 focus:ring-cyan-500"
-                    : "border border-gray-300 focus:ring-orange-500"
-                }`}
+                className="field"
                 placeholder="your.email@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
+              <label htmlFor="message" className={labelClass}>
+                {isDark ? "message:" : "What's on your mind?"}
+              </label>
               <textarea
                 name="message"
                 id="message"
                 rows={5}
                 required
-                className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:border-transparent transition-colors ${
-                  isDark
-                    ? "bg-gray-800 border border-gray-700 text-gray-100 placeholder-gray-500 focus:ring-cyan-500"
-                    : "border border-gray-300 focus:ring-orange-500"
-                }`}
+                className="field resize-none"
                 placeholder="Tell me about your project..."
               ></textarea>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSending}
-              className={`w-full font-medium py-3 px-6 rounded-lg transition-colors ${
-                isSending
-                  ? isDark
-                    ? "bg-cyan-900/50 text-gray-500 cursor-not-allowed"
-                    : "bg-orange-300 text-gray-700 cursor-not-allowed"
-                  : isDark
-                    ? "bg-cyan-500 hover:bg-cyan-600 text-gray-900"
-                    : "bg-orange-400 hover:bg-orange-500 text-gray-900"
-              }`}
-            >
-              {isSending ? "Sending..." : "Send Message"}
+            <button type="submit" disabled={isSending} className="btn btn-primary w-full">
+              <Send className="h-4 w-4" />
+              {isSending ? "Sending..." : isDark ? "send()" : "Send Message"}
             </button>
           </form>
-        </div>
+        </Reveal>
       </div>
-    </section>
+
+      <p
+        className={
+          "mt-16 text-center text-soft " + (isDark ? "font-mono text-xs" : "font-hand text-xl")
+        }
+      >
+        {isDark
+          ? `/* © ${new Date().getFullYear()} Jason Jay Gurang — compiled in Davao City */`
+          : `© ${new Date().getFullYear()} Jason Jay Gurang — painted in Davao City`}
+      </p>
+    </Page>
   );
 }

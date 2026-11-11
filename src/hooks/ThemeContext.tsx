@@ -1,77 +1,181 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+} from "react";
+import { flushSync } from "react-dom";
+import { runSweepFx } from "@/lib/sweepFx";
 
-type Theme = "light" | "dark";
+/**
+ * Two personas, one person:
+ *  - "light" = the Painter (creative side)
+ *  - "dark"  = the Developer (logic side)
+ */
+export type Theme = "light" | "dark";
+type SweepDir = "ltr" | "rtl";
 
 interface ThemeContextType {
   theme: Theme;
+  isDark: boolean;
   toggleTheme: () => void;
   isIntro: boolean;
 }
 
+const STORAGE_KEY = "portfolio-theme";
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function readSavedTheme(): Theme {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+/** A dry-brush edge used as the wipe mask when the Painter arrives. */
+function brushMask(raggedSide: "left" | "right") {
+  let seed = 11;
+  const rnd = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const rows = 30;
+  // Built with the ragged edge on the left (x 0..10), solid out to x = 110.
+  let d = "M110,0 L110,100 L5,100 ";
+  for (let i = rows; i > 0; i--) {
+    const y0 = ((i - 1) / rows) * 100;
+    const mid = ((i - 0.5) / rows) * 100;
+    d += `Q${(rnd() * 9).toFixed(2)},${mid.toFixed(2)} ${(4 + rnd() * 5).toFixed(2)},${y0.toFixed(2)} `;
+  }
+  d += "Z";
+  const flip = raggedSide === "right" ? " transform='translate(110 0) scale(-1 1)'" : "";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 100' preserveAspectRatio='none'><path d='${d}' fill='black'${flip}/></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+const BRUSH_LEFT = brushMask("left");
+const BRUSH_RIGHT = brushMask("right");
+
+/** Configure the wipe: the Painter arrives as a brush stroke, the Developer as a clean scan. */
+function setSweepVars(next: Theme, dir: SweepDir, ms: number) {
+  const s = document.documentElement.style;
+  s.setProperty("--sweep-ms", `${ms}ms`);
+  if (next === "light") {
+    s.setProperty("--sweep-mask", dir === "ltr" ? BRUSH_RIGHT : BRUSH_LEFT);
+    s.setProperty("--sweep-size", "110vw 100%");
+    s.setProperty("--sweep-from", dir === "ltr" ? "-110vw" : "100vw");
+    s.setProperty("--sweep-to", dir === "ltr" ? "0vw" : "-10vw");
+  } else {
+    s.setProperty(
+      "--sweep-mask",
+      `linear-gradient(${dir === "ltr" ? "90deg" : "270deg"}, #000 calc(100% - 5vw), transparent)`,
+    );
+    s.setProperty("--sweep-size", "105vw 100%");
+    s.setProperty("--sweep-from", dir === "ltr" ? "-105vw" : "100vw");
+    s.setProperty("--sweep-to", dir === "ltr" ? "0vw" : "-5vw");
+  }
+}
+
+function canSweep() {
+  return (
+    typeof document.startViewTransition === "function" &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage, default to light
-    const saved = typeof window !== "undefined" ? localStorage.getItem("portfolio-theme") : null;
-    return (saved === "dark" ? "dark" : "light") as Theme;
-  });
+  const [theme, setTheme] = useState<Theme>(readSavedTheme);
   const [isIntro, setIsIntro] = useState(true);
+  const busy = useRef(true);
+  const fxRef = useRef<HTMLCanvasElement>(null);
 
-  // Intro animation sequence: briefly showcase both themes
-  useEffect(() => {
+  /** Switch theme with a horizontal wipe (falls back to an instant switch). */
+  const sweepTo = useCallback(async (next: Theme, dir: SweepDir, ms: number) => {
     const html = document.documentElement;
+    const commit = () => {
+      flushSync(() => setTheme(next));
+      html.classList.toggle("dark", next === "dark");
+    };
 
-    // Start in light
-    html.classList.remove("dark");
-    html.classList.add("intro-active");
+    if (!canSweep()) {
+      commit();
+      return;
+    }
 
-    // Flash to dark after 400ms
-    const t1 = setTimeout(() => {
-      html.classList.add("dark");
-    }, 400);
+    setSweepVars(next, dir, ms);
+    html.dataset.sweep = dir;
+    try {
+      const transition = document.startViewTransition(commit);
+      // particles fly off the wipe's leading edge once the animation starts
+      transition.ready
+        .then(() => fxRef.current && runSweepFx(fxRef.current, next, dir, ms))
+        .catch(() => {});
+      await transition.finished;
+    } catch {
+      // transition skipped (e.g. tab hidden) — the theme is applied regardless
+    } finally {
+      delete html.dataset.sweep;
+    }
+  }, []);
 
-    // Flash back to light (or user's saved preference) after 900ms
-    const t2 = setTimeout(() => {
-      if (theme === "dark") {
-        html.classList.add("dark");
-      } else {
-        html.classList.remove("dark");
+  // Intro: sweep left → right to show the other persona, then sweep back.
+  useEffect(() => {
+    let cancelled = false;
+    const home = readSavedTheme();
+    const other: Theme = home === "light" ? "dark" : "light";
+    document.documentElement.classList.toggle("dark", home === "dark");
+
+    (async () => {
+      if (canSweep()) {
+        await sleep(600);
+        if (cancelled) return;
+        await sweepTo(other, "ltr", 900);
+        await sleep(550);
+        if (cancelled) return;
+        await sweepTo(home, "rtl", 900);
       }
-    }, 900);
-
-    // End intro after 1400ms
-    const t3 = setTimeout(() => {
-      html.classList.remove("intro-active");
+      if (cancelled) return;
+      busy.current = false;
       setIsIntro(false);
-    }, 1400);
+    })();
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      cancelled = true;
     };
-  }, []); // Only run once on mount
+  }, [sweepTo]);
 
-  // Sync dark class with theme state (after intro)
   useEffect(() => {
     if (isIntro) return;
-    const html = document.documentElement;
-    if (theme === "dark") {
-      html.classList.add("dark");
-    } else {
-      html.classList.remove("dark");
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      // storage unavailable — the choice just won't persist
     }
-    localStorage.setItem("portfolio-theme", theme);
   }, [theme, isIntro]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  }, []);
+    if (busy.current) return;
+    busy.current = true;
+    const next: Theme = theme === "light" ? "dark" : "light";
+    sweepTo(next, next === "dark" ? "ltr" : "rtl", 700).finally(() => {
+      busy.current = false;
+    });
+  }, [theme, sweepTo]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isIntro }}>
+    <ThemeContext.Provider value={{ theme, isDark: theme === "dark", toggleTheme, isIntro }}>
       {children}
+      <canvas
+        ref={fxRef}
+        aria-hidden="true"
+        className="sweep-fx fixed inset-0 z-[100] h-full w-full pointer-events-none"
+      />
     </ThemeContext.Provider>
   );
 }
