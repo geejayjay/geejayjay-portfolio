@@ -13,7 +13,7 @@ import { runSweepFx } from "@/lib/sweepFx";
 /**
  * Two personas, one person:
  *  - "light" = the Painter (creative side)
- *  - "dark"  = the Developer (logic side)
+ *  - "dark"  = the Builder (logic side)
  */
 export type Theme = "light" | "dark";
 type SweepDir = "ltr" | "rtl";
@@ -26,6 +26,25 @@ interface ThemeContextType {
 }
 
 const STORAGE_KEY = "portfolio-theme";
+
+/** Both portraits — the sweep shows the other mode's one before it's ever rendered. */
+const PORTRAITS = ["/profile-light.png", "/profile-dark.png"];
+
+function decodeImage(src: string) {
+  const img = new Image();
+  img.src = src;
+  return img.decode().catch(() => {});
+}
+
+/**
+ * Start the intro as soon as the page can be shown properly: web fonts ready
+ * and both portraits decoded (instant when cached), but never wait longer than
+ * `cap` ms. Otherwise the sweep can catch fallback fonts or an empty portrait.
+ */
+function pageReady(cap: number) {
+  const fonts = document.fonts?.ready ?? Promise.resolve();
+  return Promise.race([Promise.all([fonts, ...PORTRAITS.map(decodeImage)]), sleep(cap)]);
+}
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -62,7 +81,7 @@ function brushMask(raggedSide: "left" | "right") {
 const BRUSH_LEFT = brushMask("left");
 const BRUSH_RIGHT = brushMask("right");
 
-/** Configure the wipe: the Painter arrives as a brush stroke, the Developer as a clean scan. */
+/** Configure the wipe: the Painter arrives as a brush stroke, the Builder as a clean scan. */
 function setSweepVars(next: Theme, dir: SweepDir, ms: number) {
   const s = document.documentElement.style;
   s.setProperty("--sweep-ms", `${ms}ms`);
@@ -133,7 +152,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       if (canSweep()) {
-        await sleep(600);
+        await pageReady(400);
         if (cancelled) return;
         await sweepTo(other, "ltr", 900);
         await sleep(550);

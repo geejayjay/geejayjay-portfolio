@@ -75,7 +75,7 @@ export function BrushStroke({ className }: { className?: string }) {
 
 /**
  * Section title. The Painter gets a handwritten note and a brush underline;
- * the Developer gets a code comment and a blinking caret.
+ * the Builder gets a code comment and a blinking caret.
  */
 export function SectionHeading({
   note,
@@ -85,7 +85,7 @@ export function SectionHeading({
 }: {
   /** handwritten eyebrow (Painter) */
   note: string;
-  /** code-comment eyebrow (Developer) */
+  /** code-comment eyebrow (Builder) */
   comment: string;
   title: string;
   children?: ReactNode;

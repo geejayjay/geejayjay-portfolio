@@ -24,6 +24,8 @@ const skills: Skill[] = [
   { logo: "/skills/css3.svg", label: "CSS3", type: "frontend" },
   { logo: "/skills/vuejs.svg", label: "Vue.js", type: "frontend" },
   { logo: "/skills/reactjs.svg", label: "React", type: "frontend" },
+  { logo: "/skills/nuxt.svg", label: "Nuxt", type: "frontend" },
+  { logo: "/skills/nextjs-dark.svg", label: "Next.js", type: "frontend" },
   { logo: "/skills/tailwindcss.svg", label: "Tailwind CSS", type: "frontend" },
   { logo: "/skills/bootstrap5.svg", label: "Bootstrap", type: "frontend" },
 
@@ -36,6 +38,7 @@ const skills: Skill[] = [
 
   // Databases
   { logo: "/skills/postgresql.svg", label: "PostgreSQL", type: "database" },
+  { logo: "/skills/mysql.svg", label: "MySQL", type: "database" },
   { logo: "/skills/microsoft-sql-server-2.svg", label: "SQL Server", type: "database" },
   { logo: "/skills/redis.svg", label: "Redis", type: "database" },
   { logo: "/skills/sqlite-original.svg", label: "SQLite", type: "database" },
@@ -47,6 +50,7 @@ const skills: Skill[] = [
   { logo: "/skills/photoshop.svg", label: "Photoshop", type: "tools" },
   { logo: "/skills/postman.svg", label: "Postman", type: "tools" },
   { logo: "/skills/docker.svg", label: "Docker", type: "tools" },
+  { logo: "/skills/aws-dark.svg", label: "AWS", type: "tools" },
   { logo: "/skills/cloudflare.svg", label: "Cloudflare", type: "tools" },
   { logo: "/skills/nginx-original.svg", label: "Nginx", type: "tools" },
 ];

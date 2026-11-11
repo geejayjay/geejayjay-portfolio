@@ -302,18 +302,9 @@ export default function PaintCanvas() {
     };
 
     /** press: brush goes down hard — bold strokes, plus a flick of paint */
-    const onDown = (e: PointerEvent) => {
-      if (e.pointerType === "touch" || e.button !== 0) return;
-      pressed = true;
-      // dragging to paint shouldn't select the page text (form fields excepted)
-      const target = e.target as Element | null;
-      if (!target?.closest?.("input, textarea, select, [contenteditable]")) {
-        document.documentElement.classList.add("is-painting");
-      }
-      if (!stroke) dip();
+    /** short bristle marks burst out around a point (page coordinates) */
+    const flick = (x: number, y: number) => {
       const now = performance.now();
-      const x = e.clientX + window.scrollX;
-      const y = e.clientY + window.scrollY;
       const flicks = 7;
       for (let f = 0; f < flicks; f++) {
         const angle = Math.random() * Math.PI * 2;
@@ -332,13 +323,49 @@ export default function PaintCanvas() {
         }
         pushStep({ t: now, s: stroke!, ax: x, ay: y, bx: x, by: y, w: 0, k: 1, segs });
       }
-      load = 1; // pressing down squeezes fresh paint to the tip
       kick();
     };
 
-    const onUp = () => {
+    // a touch that lifts quickly without moving is a tap (not the start of a scroll)
+    let touchStart: { x: number; y: number; t: number } | null = null;
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+        return;
+      }
+      if (e.button !== 0) return;
+      pressed = true;
+      // dragging to paint shouldn't select the page text (form fields excepted)
+      const target = e.target as Element | null;
+      if (!target?.closest?.("input, textarea, select, [contenteditable]")) {
+        document.documentElement.classList.add("is-painting");
+      }
+      if (!stroke) dip();
+      flick(e.clientX + window.scrollX, e.clientY + window.scrollY);
+      load = 1; // pressing down squeezes fresh paint to the tip
+    };
+
+    /** touch screens: each tap flicks paint in a fresh colour */
+    const onTouchUp = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !touchStart) return;
+      const moved = Math.hypot(e.clientX - touchStart.x, e.clientY - touchStart.y);
+      const quick = performance.now() - touchStart.t < 400;
+      touchStart = null;
+      if (moved > 12 || !quick) return;
+      dip();
+      flick(e.clientX + window.scrollX, e.clientY + window.scrollY);
+    };
+
+    const onUp = (e?: Event) => {
+      if (e instanceof PointerEvent) onTouchUp(e);
       pressed = false;
       document.documentElement.classList.remove("is-painting");
+    };
+
+    const onCancel = () => {
+      touchStart = null; // the browser took the touch over for scrolling
+      onUp();
     };
 
     const onLeave = () => {
@@ -357,7 +384,7 @@ export default function PaintCanvas() {
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("pointerup", onUp, { passive: true });
-    window.addEventListener("pointercancel", onUp, { passive: true });
+    window.addEventListener("pointercancel", onCancel, { passive: true });
     window.addEventListener("blur", onUp);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", resize);
@@ -367,7 +394,7 @@ export default function PaintCanvas() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("pointercancel", onCancel);
       window.removeEventListener("blur", onUp);
       onUp();
       window.removeEventListener("scroll", onScroll);

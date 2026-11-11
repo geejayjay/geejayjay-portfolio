@@ -156,8 +156,8 @@ export default function ContactSection() {
         }
       >
         {isDark
-          ? `/* © ${new Date().getFullYear()} Jason Jay Gurang — compiled in Davao City */`
-          : `© ${new Date().getFullYear()} Jason Jay Gurang — painted in Davao City`}
+          ? `/* © ${new Date().getFullYear()} Jason Jay Gurang — compiled with zero warnings */`
+          : `© ${new Date().getFullYear()} Jason Jay Gurang — painted with a little wonder`}
       </p>
     </Page>
   );

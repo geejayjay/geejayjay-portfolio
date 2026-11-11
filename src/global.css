@@ -77,7 +77,7 @@
     --sidebar-border: 220 15% 18%;
     --sidebar-ring: 190 100% 45%;
 
-    /* ---- Persona tokens: the Developer ---- */
+    /* ---- Persona tokens: the Builder ---- */
     --c-bg: 8 11 17;
     --c-ink: 230 237 243;
     --c-soft: 139 152 169;
@@ -130,7 +130,7 @@
 
 /* =====================================================================
    THEME SWEEP — the old persona stays put while the new one wipes across.
-   Painter arrives as a dry-brush stroke; Developer arrives as a clean scan.
+   Painter arrives as a dry-brush stroke; Builder arrives as a clean scan.
    Mask + geometry are set from ThemeContext via custom properties.
    ===================================================================== */
 ::view-transition-old(root),
@@ -422,7 +422,13 @@ html[data-sweep] .sweep-fx {
     animation: swash-in 0.7s 0.25s cubic-bezier(0.6, 0, 0.2, 1) forwards;
   }
 
-  /* ---- Blinking caret (Developer only) ---- */
+  /* first render: highlight already painted, so the sweep never catches it half-drawn */
+  .swash-static::before {
+    animation: none;
+    transform: rotate(-1.2deg) scaleX(1);
+  }
+
+  /* ---- Blinking caret (Builder only) ---- */
   .caret {
     display: inline-block;
     color: rgb(var(--c-accent));
@@ -454,6 +460,28 @@ html[data-sweep] .sweep-fx {
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6% 94%, transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 6% 94%, transparent 100%);
+  }
+
+  /* Dark mode on touch screens: 1s and 0s popping out where you tap */
+  .bit-burst {
+    position: fixed;
+    z-index: 5;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .bit-burst span {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: rgb(var(--c-accent));
+    text-shadow: 0 0 8px currentColor;
+    opacity: 0;
+    animation: bit-burst 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   .code-drift {
@@ -510,6 +538,20 @@ html[data-sweep] .sweep-fx {
   100% {
     border-radius: 52% 48% 40% 60% / 42% 58% 46% 54%;
     transform: rotate(12deg);
+  }
+}
+
+@keyframes bit-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
   }
 }
 

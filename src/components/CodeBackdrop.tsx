@@ -1,9 +1,13 @@
 import { useEffect, useRef, ReactNode } from "react";
 
 /**
- * Developer mode: faint source code drifts behind the page.
+ * Dark mode (the builder): faint source code drifts behind the page.
  * The columns sit at different depths and shift against the mouse (parallax),
  * and the code lights up around the cursor like a torch over a dark screen.
+ *
+ * Touch screens have no hovering cursor, so a tap does the same job: the code
+ * lights up under the finger for a moment and a burst of 1s and 0s pops out —
+ * the dark-mode counterpart to tap-to-paint in light mode.
  */
 
 const SNIPPETS: string[] = [
@@ -128,23 +132,27 @@ export default function CodeBackdrop() {
 
   useEffect(() => {
     const root = rootRef.current!;
-    // normalised pointer (-1..1) and pixel pointer, eased toward their targets
-    // no mouse (touch): park the torch off-screen so the code stays a whisper
+    // normalised pointer (-1..1), pixel pointer and torch radius, eased toward targets.
+    // No mouse (touch): the torch starts switched off until a tap.
     const hasMouse = window.matchMedia("(hover: hover)").matches;
+    const TORCH = 380;
     const cur = {
       px: 0,
       py: 0,
-      mx: hasMouse ? window.innerWidth * 0.5 : -9999,
-      my: hasMouse ? window.innerHeight * 0.38 : -9999,
+      mx: window.innerWidth * 0.5,
+      my: window.innerHeight * 0.38,
+      r: hasMouse ? TORCH : 0,
     };
     const target = { ...cur };
     let raf = 0;
+    let dimTimer = 0;
 
     const write = () => {
       root.style.setProperty("--px", cur.px.toFixed(4));
       root.style.setProperty("--py", cur.py.toFixed(4));
       root.style.setProperty("--mx", `${cur.mx.toFixed(1)}px`);
       root.style.setProperty("--my", `${cur.my.toFixed(1)}px`);
+      root.style.setProperty("--r", `${Math.max(cur.r, 1).toFixed(1)}px`);
     };
 
     const tick = () => {
@@ -153,12 +161,14 @@ export default function CodeBackdrop() {
       cur.py += (target.py - cur.py) * ease;
       cur.mx += (target.mx - cur.mx) * 0.18;
       cur.my += (target.my - cur.my) * 0.18;
+      cur.r += (target.r - cur.r) * 0.1;
       write();
       const settled =
         Math.abs(target.px - cur.px) < 0.001 &&
         Math.abs(target.py - cur.py) < 0.001 &&
         Math.abs(target.mx - cur.mx) < 0.5 &&
-        Math.abs(target.my - cur.my) < 0.5;
+        Math.abs(target.my - cur.my) < 0.5 &&
+        Math.abs(target.r - cur.r) < 0.5;
       raf = settled ? 0 : requestAnimationFrame(tick);
     };
 
@@ -170,10 +180,73 @@ export default function CodeBackdrop() {
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
+    /** a burst of 1s and 0s popping out from the tap point */
+    const burst = (x: number, y: number) => {
+      const el = document.createElement("div");
+      el.className = "bit-burst";
+      el.setAttribute("aria-hidden", "true");
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        const span = document.createElement("span");
+        const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+        const dist = 40 + Math.random() * 60;
+        span.textContent = Math.random() < 0.5 ? "0" : "1";
+        span.style.setProperty("--dx", `${(Math.cos(angle) * dist).toFixed(1)}px`);
+        span.style.setProperty("--dy", `${(Math.sin(angle) * dist).toFixed(1)}px`);
+        span.style.animationDelay = `${Math.round(Math.random() * 80)}ms`;
+        if (i % 3 === 0) span.style.color = "rgb(var(--c-accent2))";
+        el.appendChild(span);
+      }
+      document.body.appendChild(el);
+      window.setTimeout(() => el.remove(), 1100);
+    };
+
+    // a touch that lifts quickly without moving is a tap (not the start of a scroll)
+    let touchStart: { x: number; y: number; t: number } | null = null;
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "touch") touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !touchStart) return;
+      const moved = Math.hypot(e.clientX - touchStart.x, e.clientY - touchStart.y);
+      const quick = performance.now() - touchStart.t < 400;
+      touchStart = null;
+      if (moved > 12 || !quick) return;
+
+      // jump the torch to the finger (no sliding across the screen), then let it fade
+      cur.mx = target.mx = e.clientX;
+      cur.my = target.my = e.clientY;
+      target.px = (e.clientX / window.innerWidth) * 2 - 1;
+      target.py = (e.clientY / window.innerHeight) * 2 - 1;
+      target.r = TORCH * 0.75;
+      clearTimeout(dimTimer);
+      dimTimer = window.setTimeout(() => {
+        target.r = 0;
+        if (!raf) raf = requestAnimationFrame(tick);
+      }, 1400);
+      burst(e.clientX, e.clientY);
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    const onCancel = () => {
+      touchStart = null;
+    };
+
     write();
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    window.addEventListener("pointerup", onUp, { passive: true });
+    window.addEventListener("pointercancel", onCancel, { passive: true });
     return () => {
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      clearTimeout(dimTimer);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -186,9 +259,9 @@ export default function CodeBackdrop() {
       style={{
         // bright near the cursor, a whisper everywhere else
         maskImage:
-          "radial-gradient(circle 380px at var(--mx) var(--my), #000 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.17) 100%)",
+          "radial-gradient(circle var(--r, 380px) at var(--mx) var(--my), #000 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.17) 100%)",
         WebkitMaskImage:
-          "radial-gradient(circle 380px at var(--mx) var(--my), #000 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.17) 100%)",
+          "radial-gradient(circle var(--r, 380px) at var(--mx) var(--my), #000 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.17) 100%)",
       }}
     >
       <div className="absolute -inset-16 grid grid-cols-2 lg:grid-cols-4 gap-10 px-10">

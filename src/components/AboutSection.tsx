@@ -15,6 +15,10 @@ type InfoCardProps = {
   url?: string;
 };
 
+// Professional development started in 2022; the count updates every new year.
+const CAREER_START_YEAR = 2022;
+const yearsBuilding = new Date().getFullYear() - CAREER_START_YEAR;
+
 // --- Data Arrays ---
 const experienceData = [
   {
@@ -159,9 +163,11 @@ export default function AboutSection() {
       <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <Reveal className="lg:sticky lg:top-28 lg:self-start">
           <SectionHeading note="a little about me" comment="// 02 — about" title="About Me">
-            I'm a passionate tech enthusiast skilled in web/software development, graphic design,
-            electronics engineering, and embedded systems with Raspberry Pi and Arduino. I'm
-            currently diving into Machine Learning and AI to grow my future skill set.
+            I'm a licensed Electronics Engineer who has spent the last {yearsBuilding} years
+            building production web apps — from C#/ASP.NET asset management systems to a Vue and Fastify
+            platform for managing AI models and inference data. I like owning the whole path:
+            database, API, interface, and occasionally the hardware it talks to. On the side I do
+            graphic design, and right now I'm going deeper into machine learning.
           </SectionHeading>
         </Reveal>
 

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/ThemeContext";
 
-/** Light mode (the painter) ⇄ Dark mode (the developer). */
+/** Light mode (the painter) ⇄ Dark mode (the builder). */
 export default function ThemeToggle() {
   const { isDark, toggleTheme, isIntro } = useTheme();
 
@@ -23,7 +23,7 @@ export default function ThemeToggle() {
       <span
         aria-hidden="true"
         className={cn(
-          "absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] transition-transform duration-500 ease-[cubic-bezier(0.7,0,0.3,1)]",
+          "absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] transition-transform duration-500 [transition-timing-function:cubic-bezier(0.7,0,0.3,1)]",
           isDark
             ? "translate-x-full rounded bg-brand shadow-[0_0_18px_-2px_rgb(var(--c-accent)/0.8)]"
             : "rounded-full bg-brand",
