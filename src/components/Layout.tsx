@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "./ThemeToggle";
-import { socialLinks } from "./socialLinks";
+import SocialIcons from "./SocialIcons";
 import { useTheme } from "@/hooks/ThemeContext";
 
 const PaintCanvas = lazy(() => import("./PaintCanvas"));
@@ -151,20 +151,7 @@ export default function Layout({ children }: LayoutProps) {
               )}
             </div>
           )}
-          <div className="hidden items-center gap-4 lg:flex">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={link.label}
-                className="text-soft transition-colors hover:text-brand"
-              >
-                {link.icon}
-              </a>
-            ))}
-          </div>
+          <SocialIcons className="hidden lg:flex" />
           <ThemeToggle />
           <button
             className="text-ink md:hidden"
@@ -269,20 +256,7 @@ export default function Layout({ children }: LayoutProps) {
               </li>
             ))}
           </ul>
-          <div className="mt-12 flex gap-6">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={link.label}
-                className="text-soft hover:text-brand"
-              >
-                {link.icon}
-              </a>
-            ))}
-          </div>
+          <SocialIcons size="lg" className="mt-12" />
         </div>
       )}
 
