@@ -42,7 +42,7 @@ const SCENES: ReelScene[] = [
     src: "/works/experience-east-asean/new/flipbook-demo.mp4",
     av1: "/works/experience-east-asean/new/flipbook-demo.av1.mp4",
     poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
-    durationMs: 12400,
+    durationMs: 10400,
   },
   {
     label: "Admin CMS",
