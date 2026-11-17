@@ -165,7 +165,7 @@ function softSprite(rgb: string, strength: number) {
   return c;
 }
 
-/** Paper tooth: fine specks plus a soft mottle, used to bite into wet paint. */
+/** Paper tooth: soft organic mottle with gentle grain, so wet paint settles matte into paper. */
 function grainTexture() {
   const size = 256;
   const c = document.createElement("canvas");
@@ -174,7 +174,7 @@ function grainTexture() {
   const img = g.createImageData(size, size);
 
   // coarse value noise for the mottle (tiles seamlessly)
-  const cells = 8;
+  const cells = 10;
   const grid = Array.from({ length: cells * cells }, Math.random);
   const at = (gx: number, gy: number) => grid[(gy % cells) * cells + (gx % cells)];
   const smooth = (v: number) => v * v * (3 - 2 * v);
@@ -191,9 +191,10 @@ function grainTexture() {
       const bottom = at(ix, iy + 1) * (1 - tx) + at(ix + 1, iy + 1) * tx;
       const mottle = top * (1 - ty) + bottom * ty;
 
-      const speck = Math.random() < 0.05 ? rand(60, 150) : Math.random() * 16;
+      // subtle paper fiber tooth without sharp white pinhole dots
+      const tooth = Math.random() * 14;
       const i = (y * size + x) * 4;
-      img.data[i + 3] = Math.min(255, speck + Math.max(0, mottle - 0.55) * 120);
+      img.data[i + 3] = Math.min(72, tooth + Math.max(0, mottle - 0.42) * 68);
     }
   }
   g.putImageData(img, 0, 0);
@@ -208,10 +209,10 @@ export default function PaintCanvas() {
     const ctx = canvas.getContext("2d")!;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
-    const pools = PIGMENTS.map((p) => softSprite(shade(p, -0.32), 0.5));
-    const tints = PIGMENTS.map((p) => softSprite(shade(p, 0), 0.75));
+    const pools = PIGMENTS.map((p) => softSprite(shade(p, -0.22), 0.32));
+    const tints = PIGMENTS.map((p) => softSprite(shade(p, 0), 0.45));
     const rgb = PIGMENTS.map((p) => shade(p, 0));
-    const bloom = softSprite("255,255,255", 0.42);
+    const bloom = softSprite("0,0,0", 0.24); // used with destination-out to dilute pigment toward paper
     const grain = ctx.createPattern(grainTexture(), "repeat")!;
 
     let strokes: Stroke[] = [];
@@ -589,16 +590,22 @@ export default function PaintCanvas() {
           smudge(dot);
         }
 
-        // pools and blooms only tint paint that is already there
+        // pools and tints gently settle inside existing paint; blooms softly dilute pigment
         if (st.blots.length) {
-          ctx.globalCompositeOperation = "source-atop";
           for (let b = 0; b < st.blots.length; b++) {
             const bl = st.blots[b];
             const age = (now - bl.t) / LIFE_MS;
             if (age > 0.6) continue;
-            const sprite = bl.kind === "pool" ? pools[bl.c] : bl.kind === "tint" ? tints[bl.c] : bloom;
-            ctx.globalAlpha = alpha * (bl.kind === "pool" ? 0.5 : bl.kind === "tint" ? 0.6 : 0.65);
-            ctx.drawImage(sprite, bl.x - bl.r, bl.y - bl.r, bl.r * 2, bl.r * 2);
+            if (bl.kind === "bloom") {
+              ctx.globalCompositeOperation = "destination-out";
+              ctx.globalAlpha = alpha * 0.3;
+              ctx.drawImage(bloom, bl.x - bl.r, bl.y - bl.r, bl.r * 2, bl.r * 2);
+            } else {
+              ctx.globalCompositeOperation = "source-atop";
+              const sprite = bl.kind === "pool" ? pools[bl.c] : tints[bl.c];
+              ctx.globalAlpha = alpha * (bl.kind === "pool" ? 0.34 : 0.42);
+              ctx.drawImage(sprite, bl.x - bl.r, bl.y - bl.r, bl.r * 2, bl.r * 2);
+            }
           }
         }
 
@@ -791,7 +798,7 @@ export default function PaintCanvas() {
             t: now,
           });
         }
-        st.nextBlot = st.travel + (press > 0.6 ? rand(40, 95) : rand(120, 420));
+        st.nextBlot = st.travel + (press > 0.6 ? rand(75, 160) : rand(140, 440));
       }
 
       // now and then the brush runs dry and leaves an unpainted streak of varying width
