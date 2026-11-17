@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { AV1_TYPE } from "@/data/works";
 import { useTheme } from "@/hooks/ThemeContext";
 import { cn } from "@/lib/utils";
-
-const AREA_STATES = [
-  { src: "/works/experience-east-asean/areas/area-sabah.webp", x: 29.9, y: 37.8 },
-  { src: "/works/experience-east-asean/areas/area-palawan.webp", x: 32.0, y: 21.1 },
-  { src: "/works/experience-east-asean/areas/area-mindanao.webp", x: 43.0, y: 30.3 },
-  { src: "/works/experience-east-asean/areas/area-brunei.webp", x: 24.9, y: 41.1 },
-];
 
 type ReelScene = {
   label: string;
@@ -15,11 +9,10 @@ type ReelScene = {
   type: "scroll" | "video";
   src: string;
   poster?: string;
-  hasAreasHover?: boolean;
-  pinWebNavbar?: boolean;
-  navbarAsset?: string;
   pinAdminChrome?: boolean;
   cursorWaypoints?: { x: number; y: number }[];
+  /** smaller AV1 version of a video scene (see works.ts ShowcaseView.av1) */
+  av1?: string;
   durationMs: number;
 };
 
@@ -27,18 +20,18 @@ const SCENES: ReelScene[] = [
   {
     label: "Public Portal · Focus Areas",
     url: "experienceeastasean.com",
-    type: "scroll",
-    hasAreasHover: true,
-    pinWebNavbar: true,
-    navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
-    src: "/works/experience-east-asean/web-home-desktop.webp",
-    durationMs: 11000,
+    type: "video",
+    src: "/works/experience-east-asean/web/web-home-desktop.mp4",
+    av1: "/works/experience-east-asean/web/web-home-desktop.av1.mp4",
+    poster: "/works/experience-east-asean/web/web-home-desktop-poster.webp",
+    durationMs: 13400,
   },
   {
     label: "Connectivity Map",
     url: "experienceeastasean.com/connectivity-map",
     type: "video",
     src: "/works/experience-east-asean/new/connectivity-map.mp4",
+    av1: "/works/experience-east-asean/new/connectivity-map.av1.mp4",
     poster: "/works/experience-east-asean/new/connectivity-map-poster.webp",
     durationMs: 14400,
   },
@@ -47,6 +40,7 @@ const SCENES: ReelScene[] = [
     url: "experienceeastasean.com/resources",
     type: "video",
     src: "/works/experience-east-asean/new/flipbook-demo.mp4",
+    av1: "/works/experience-east-asean/new/flipbook-demo.av1.mp4",
     poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
     durationMs: 12400,
   },
@@ -71,8 +65,6 @@ export default function FeaturedGalleryStage({
 }: FeaturedGalleryStageProps) {
   const { isDark } = useTheme();
   const [sceneIdx, setSceneIdx] = useState(0);
-  const [areaIdx, setAreaIdx] = useState(0);
-  const [areasVisible, setAreasVisible] = useState(false);
   const [videoCursorIdx, setVideoCursorIdx] = useState(0);
   const [hasEntered, setHasEntered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -83,9 +75,6 @@ export default function FeaturedGalleryStage({
   const dImgRef = useRef<HTMLImageElement>(null);
   const dVideoRef = useRef<HTMLVideoElement>(null);
   const mScreenRef = useRef<HTMLDivElement>(null);
-  const mImgRef = useRef<HTMLImageElement>(null);
-  const dNavRef = useRef<HTMLDivElement>(null);
-  const mNavRef = useRef<HTMLDivElement>(null);
   const reelBarRef = useRef<HTMLDivElement>(null);
 
   const idxRef = useRef(0);
@@ -93,7 +82,6 @@ export default function FeaturedGalleryStage({
   const pausedRef = useRef(false);
 
   const scene = SCENES[sceneIdx] ?? SCENES[0];
-  const area = AREA_STATES[areaIdx] ?? AREA_STATES[0];
 
   // Defer loading media & running rAF until the stage is near/in the viewport
   useEffect(() => {
@@ -152,35 +140,11 @@ export default function FeaturedGalleryStage({
         const t = Math.min(1, elapsedRef.current / s.durationMs);
 
         if (s.type === "scroll" && dImgRef.current && dScreenRef.current && dScrollStageRef.current) {
-          let scrollT = t;
-          if (s.hasAreasHover) {
-            // The Areas map sits at ~12-22% of the page: ease down to it, linger
-            // while the hover states cycle, then carry on to the footer.
-            if (t < 0.14) {
-              scrollT = (t / 0.14) * 0.12;
-              setAreasVisible(false);
-            } else if (t <= 0.42) {
-              scrollT = 0.12 + ((t - 0.14) / 0.28) * 0.104;
-              setAreasVisible(true);
-              const nextAreaIdx = Math.min(
-                AREA_STATES.length - 1,
-                Math.floor(((t - 0.14) / 0.28) * AREA_STATES.length),
-              );
-              setAreaIdx(nextAreaIdx);
-            } else {
-              setAreasVisible(false);
-              scrollT = 0.224 + ((t - 0.42) / 0.58) * 0.776;
-            }
-          } else {
-            setAreasVisible(false);
-          }
-
+          const scrollT = t;
           const dMax = Math.max(0, dImgRef.current.offsetHeight - dScreenRef.current.clientHeight);
           const dY = -Math.round(scrollT * dMax);
           dScrollStageRef.current.style.transform = `translate3d(0, ${dY}px, 0)`;
-          if (dNavRef.current) dNavRef.current.style.opacity = dY < 0 ? "1" : "0";
         } else {
-          setAreasVisible(false);
           if (s.cursorWaypoints && s.cursorWaypoints.length > 0) {
             setVideoCursorIdx(
               Math.min(s.cursorWaypoints.length - 1, Math.floor(t * s.cursorWaypoints.length)),
@@ -190,12 +154,6 @@ export default function FeaturedGalleryStage({
 
         // Synced continuous mobile scroll
         const globalT = (idx + t) / SCENES.length;
-        if (mImgRef.current && mScreenRef.current) {
-          const mMax = Math.max(0, mImgRef.current.offsetHeight - mScreenRef.current.clientHeight);
-          const mY = -Math.round(globalT * mMax);
-          mImgRef.current.style.transform = `translate3d(0, ${mY}px, 0)`;
-          if (mNavRef.current) mNavRef.current.style.opacity = mY < 0 ? "1" : "0";
-        }
 
         if (reelBarRef.current) {
           reelBarRef.current.style.width = `${(globalT * 100).toFixed(1)}%`;
@@ -297,7 +255,6 @@ export default function FeaturedGalleryStage({
                       }
                     }}
                     key={scene.src}
-                    src={scene.src}
                     autoPlay
                     loop
                     muted
@@ -310,7 +267,10 @@ export default function FeaturedGalleryStage({
                       if (v.paused) v.play().catch(() => {});
                     }}
                     className="block h-full w-full object-cover object-center"
-                  />
+                  >
+                    {scene.av1 && <source src={scene.av1} type={AV1_TYPE} />}
+                    <source src={scene.src} type="video/mp4" />
+                  </video>
                   {scene.cursorWaypoints && scene.cursorWaypoints.length > 0 && (
                     <div
                       aria-hidden="true"
@@ -348,60 +308,9 @@ export default function FeaturedGalleryStage({
                     decoding="async"
                     className="block h-auto w-full"
                   />
-                  {scene.hasAreasHover && (
-                    <div
-                      className={cn(
-                        "pointer-events-none absolute left-[11.25%] top-[17.196%] h-[8.495%] w-[77.613%] transition-opacity duration-200",
-                        areasVisible ? "opacity-100" : "opacity-0",
-                      )}
-                    >
-                      <img
-                        src={area.src}
-                        alt=""
-                        decoding="async"
-                        className="block h-full w-full rounded object-cover"
-                      />
-                      <div
-                        style={{
-                          left: `${area.x}%`,
-                          top: `${area.y}%`,
-                          transition:
-                            "left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
-                        }}
-                        className="absolute -translate-x-0.5 -translate-y-0.5"
-                      >
-                        <span className="absolute -left-1.5 -top-1.5 h-5 w-5 animate-ping rounded-full bg-brand/45" />
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          className="relative h-4 w-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                        >
-                          <path
-                            d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
-                            fill="#ffffff"
-                            stroke="#0f172a"
-                            strokeWidth="1.8"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Pinned public header: fades in once the page scrolls, as on the live site */}
-              {scene.pinWebNavbar && scene.navbarAsset && (
-                <div
-                  ref={dNavRef}
-                  aria-hidden="true"
-                  style={{ opacity: 0 }}
-                  className="pointer-events-none absolute left-0 top-0 z-10 w-full transition-opacity duration-300"
-                >
-                  <div className="absolute inset-0 bg-[#134e4a]/80 shadow-md backdrop-blur-lg" />
-                  <img src={scene.navbarAsset} alt="" decoding="async" className="relative block h-auto w-full" />
-                </div>
-              )}
 
               {/* Pinned Admin Header & Sidebar */}
               {scene.pinAdminChrome && (
@@ -445,27 +354,25 @@ export default function FeaturedGalleryStage({
         <div ref={mScreenRef} className="relative h-full w-full overflow-hidden">
           {hasEntered && (
             <>
-              <img
-                ref={mImgRef}
-                src="/works/experience-east-asean/web-home-mobile.webp"
-                alt="Experience East ASEAN Mobile"
-                decoding="async"
-                className="block h-auto w-full will-change-transform"
-              />
-              <div
-                ref={mNavRef}
-                aria-hidden="true"
-                style={{ opacity: 0 }}
-                className="pointer-events-none absolute left-0 top-0 z-10 w-full transition-opacity duration-300"
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                poster="/works/experience-east-asean/web/web-home-mobile-poster.webp"
+                ref={(el) => {
+                  if (el) {
+                    el.muted = true;
+                    el.defaultMuted = true;
+                    if (el.paused) el.play().catch(() => {});
+                  }
+                }}
+                className="block h-full w-full object-cover object-top"
               >
-                <div className="absolute inset-0 bg-[#134e4a]/80 backdrop-blur-lg" />
-                <img
-                  src="/works/experience-east-asean/navbar-mobile.webp"
-                  alt=""
-                  decoding="async"
-                  className="relative block h-auto w-full"
-                />
-              </div>
+                <source src="/works/experience-east-asean/web/web-home-mobile.av1.mp4" type={AV1_TYPE} />
+                <source src="/works/experience-east-asean/web/web-home-mobile.mp4" type="video/mp4" />
+              </video>
             </>
           )}
         </div>

@@ -11,7 +11,7 @@ import {
 import InteractiveShowcase from "@/components/InteractiveShowcase";
 import Layout from "@/components/Layout";
 import { BrushStroke, Reveal } from "@/components/Page";
-import { DetailScreenshot, getWorkBySlug, isVideoAsset, works } from "@/data/works";
+import { AV1_TYPE, DetailScreenshot, getWorkBySlug, isVideoAsset, works } from "@/data/works";
 import { useTheme } from "@/hooks/ThemeContext";
 import { cn } from "@/lib/utils";
 
@@ -329,14 +329,16 @@ export default function WorkDetailPage() {
                               if (el.paused) el.play().catch(() => {});
                             }
                           }}
-                          src={shot.file}
                           autoPlay
                           loop
                           muted
                           playsInline
                           preload="auto"
                           className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                        />
+                        >
+                          {shot.av1 && <source src={shot.av1} type={AV1_TYPE} />}
+                          <source src={shot.file} type="video/mp4" />
+                        </video>
                       ) : (
                         <img
                           src={shot.file}
@@ -430,7 +432,6 @@ export default function WorkDetailPage() {
             <div className="max-h-[75vh] overflow-auto rounded-lg bg-slate-950/10">
               {isVideoAsset(lightbox.file, lightbox.mediaType) ? (
                 <video
-                  src={lightbox.file}
                   poster={lightbox.poster}
                   autoPlay
                   loop
@@ -438,7 +439,10 @@ export default function WorkDetailPage() {
                   playsInline
                   controls
                   className="mx-auto h-auto max-h-[75vh] w-full object-contain"
-                />
+                >
+                  {lightbox.av1 && <source src={lightbox.av1} type={AV1_TYPE} />}
+                  <source src={lightbox.file} type="video/mp4" />
+                </video>
               ) : (
                 <img
                   src={lightbox.file}

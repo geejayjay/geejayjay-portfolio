@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Monitor, Pause, Play, Smartphone } from "lucide-react";
-import { isVideoAsset, ShowcaseView } from "@/data/works";
+import { AV1_TYPE, isVideoAsset, ShowcaseView } from "@/data/works";
 import { useTheme } from "@/hooks/ThemeContext";
 import { cn } from "@/lib/utils";
 
@@ -12,13 +12,6 @@ interface InteractiveShowcaseProps {
 
 const SPEEDS = [1, 1.75, 2.5];
 
-const AREA_STATES = [
-  { src: "/works/experience-east-asean/areas/area-sabah.webp", x: 29.9, y: 37.8, label: "Sabah" },
-  { src: "/works/experience-east-asean/areas/area-palawan.webp", x: 32.0, y: 21.1, label: "Palawan" },
-  { src: "/works/experience-east-asean/areas/area-mindanao.webp", x: 43.0, y: 30.3, label: "Mindanao" },
-  { src: "/works/experience-east-asean/areas/area-brunei.webp", x: 24.9, y: 41.1, label: "Brunei" },
-];
-
 export default function InteractiveShowcase({
   title,
   views,
@@ -29,8 +22,6 @@ export default function InteractiveShowcase({
   const [isPlaying, setIsPlaying] = useState(true);
   const [speedIdx, setSpeedIdx] = useState(0);
   const [progress, setProgress] = useState(0); // 0..1
-  const [areasVisible, setAreasVisible] = useState(false);
-  const [areaIdx, setAreaIdx] = useState(0);
   const [tourIdx, setTourIdx] = useState(0);
 
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -44,7 +35,6 @@ export default function InteractiveShowcase({
   const draggingRef = useRef(false);
   const dragStartYRef = useRef(0);
   const dragStartProgressRef = useRef(0);
-  const areaTimerRef = useRef(0);
 
   const activeView = views.find((v) => v.id === activeId) ?? views[0];
   const isVideo = Boolean(
@@ -76,21 +66,15 @@ export default function InteractiveShowcase({
       if (scrollStageRef.current) {
         scrollStageRef.current.style.transform = `translate3d(0, ${-Math.round(clamped * max)}px, 0)`;
       }
-      if (activeView?.hasAreasHover) {
-        setAreasVisible(clamped >= 0.14 && clamped <= 0.34);
-      }
     },
-    [getMaxScroll, isVideo, activeView?.hasAreasHover],
+    [getMaxScroll, isVideo],
   );
 
   // Reset playback state when switching views
   useEffect(() => {
     directionRef.current = 1;
     progressRef.current = 0;
-    areaTimerRef.current = 0;
     setProgress(0);
-    setAreasVisible(false);
-    setAreaIdx(0);
     setTourIdx(0);
     setIsPlaying(true);
     if (scrollStageRef.current) {
@@ -152,23 +136,11 @@ export default function InteractiveShowcase({
       lastTs = ts;
 
       const p = progressRef.current;
-      const inAreasBand = Boolean(activeView?.hasAreasHover) && p >= 0.12 && p <= 0.23;
-      if (inAreasBand) {
-        areaTimerRef.current += dt;
-        const nextAreaIdx = Math.floor(areaTimerRef.current / 1.1) % AREA_STATES.length;
-        setAreaIdx(nextAreaIdx);
-        setAreasVisible(true);
-      } else if (activeView?.hasAreasHover) {
-        setAreasVisible(false);
-      }
 
       if (isPlaying && !draggingRef.current) {
         const max = getMaxScroll();
         if (max > 0) {
-          // Keep scrolling speed consistent with only a very subtle ease over the Areas band
-          const inSlowZone = Boolean(activeView?.hasAreasHover) && p >= 0.14 && p <= 0.21;
-          const speedFactor = inSlowZone ? 0.85 : 1;
-          const pxPerSec = 58 * SPEEDS[speedIdx] * speedFactor;
+          const pxPerSec = 58 * SPEEDS[speedIdx];
           const delta = (pxPerSec * dt) / max;
           let next = p + delta * directionRef.current;
           if (next >= 1) {
@@ -186,7 +158,7 @@ export default function InteractiveShowcase({
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [isScrollable, isPlaying, speedIdx, activeView?.hasAreasHover, getMaxScroll, applyProgress]);
+  }, [isScrollable, isPlaying, speedIdx, getMaxScroll, applyProgress]);
 
   if (!activeView) return null;
 
@@ -214,7 +186,6 @@ export default function InteractiveShowcase({
     }
   };
 
-  const currentArea = AREA_STATES[areaIdx] ?? AREA_STATES[0];
 
   const renderMedia = () => {
     const tourCursorEl =
@@ -262,7 +233,6 @@ export default function InteractiveShowcase({
               }
             }}
             key={activeView.id}
-            src={activeView.asset}
             autoPlay
             loop
             muted
@@ -287,8 +257,11 @@ export default function InteractiveShowcase({
                 }
               }
             }}
-            className="block h-full w-full object-cover object-center"
-          />
+            className={cn("block h-full w-full object-cover", isMobile ? "object-top" : "object-center")}
+          >
+            {activeView.av1 && <source src={activeView.av1} type={AV1_TYPE} />}
+            <source src={activeView.asset} type="video/mp4" />
+          </video>
           {tourCursorEl}
         </>
       );
@@ -309,56 +282,8 @@ export default function InteractiveShowcase({
             )}
           />
 
-          {/* Interactive Focus Areas Hover Overlay + Animated Cursor */}
-          {activeView.hasAreasHover && (
-            <div
-              className={cn(
-                "pointer-events-none absolute left-[11.25%] top-[17.196%] h-[8.495%] w-[77.613%] transition-opacity duration-300",
-                areasVisible ? "opacity-100" : "opacity-0",
-              )}
-            >
-              <img
-                src={currentArea.src}
-                alt={`Focus Area: ${currentArea.label}`}
-                className="block h-full w-full rounded object-cover shadow-lg"
-              />
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                style={{
-                  left: `${currentArea.x}%`,
-                  top: `${currentArea.y}%`,
-                  transition:
-                    "left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
-                }}
-                className="absolute h-5 w-5 -translate-x-0.5 -translate-y-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-              >
-                <path
-                  d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
-                  fill="#ffffff"
-                  stroke="#0f172a"
-                  strokeWidth="1.8"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-          )}
         </div>
 
-        {/* Pinned public header: like the live site, the solid header (with the logo)
-            fades in once the page scrolls, as a translucent blurred bar over the content. */}
-        {activeView.pinWebNavbar && activeView.navbarAsset && (
-          <div
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none absolute left-0 top-0 z-10 w-full transition-opacity duration-300",
-              progress > 0.004 ? "opacity-100" : "opacity-0",
-            )}
-          >
-            <div className="absolute inset-0 bg-[#134e4a]/80 shadow-lg backdrop-blur-lg" />
-            <img src={activeView.navbarAsset} alt="" className="relative block h-auto w-full" />
-          </div>
-        )}
 
         {/* Pinned Admin CMS Header & Sidebar */}
         {activeView.pinAdminChrome && (

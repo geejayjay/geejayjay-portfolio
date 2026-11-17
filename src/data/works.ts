@@ -10,15 +10,13 @@ export type ShowcaseView = {
   device: "desktop" | "mobile";
   asset: string;
   mediaType?: "image" | "video";
+  /**
+   * Smaller AV1 version of a video `asset`. Browsers that can decode AV1 download only
+   * this; everyone else skips it (no download) and plays `asset` (H.264 MP4).
+   */
+  av1?: string;
   poster?: string;
   animatedScroll?: boolean;
-  hasAreasHover?: boolean;
-  pinWebNavbar?: boolean;
-  /**
-   * The site header in its scrolled state, foreground only (transparent PNG/WebP).
-   * Shown over a translucent blurred bar once the page scrolls, like the live site.
-   */
-  navbarAsset?: string;
   pinAdminChrome?: boolean;
   /** Full-height CMS sidebar (menu part) with this page's item highlighted. */
   adminSidebar?: string;
@@ -32,9 +30,14 @@ export type DetailScreenshot = {
   title: string;
   file: string;
   mediaType?: "image" | "video";
+  /** Smaller AV1 version of a video `file` (see ShowcaseView.av1). */
+  av1?: string;
   poster?: string;
   caption: string;
 };
+
+/** MIME type with codec string, so browsers without AV1 skip the file without fetching it. */
+export const AV1_TYPE = 'video/mp4; codecs="av01.0.05M.08"';
 
 export const isVideoAsset = (src: string, mediaType?: "image" | "video") =>
   mediaType === "video" || /\.(webm|mp4)(\?|$)/i.test(src);
@@ -169,17 +172,16 @@ export const works: WorkItem[] = [
         id: "web-desktop",
         label: "Public Portal",
         device: "desktop",
-        asset: "/works/experience-east-asean/web-home-desktop.webp",
-        animatedScroll: true,
-        hasAreasHover: true,
-        pinWebNavbar: true,
-        navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
+        asset: "/works/experience-east-asean/web/web-home-desktop.mp4",
+        av1: "/works/experience-east-asean/web/web-home-desktop.av1.mp4",
+        mediaType: "video",
+        poster: "/works/experience-east-asean/web/web-home-desktop-poster.webp",
         jumps: [
           { label: "Top", pct: 0 },
-          { label: "Areas Map", pct: 18 },
-          { label: "Attractions", pct: 33 },
-          { label: "Stories", pct: 47 },
-          { label: "Footer", pct: 100 },
+          { label: "Areas Map", pct: 15 },
+          { label: "Attractions", pct: 44 },
+          { label: "Stories", pct: 53 },
+          { label: "Footer", pct: 85 },
         ],
         caption: "Full-page Nuxt 4 SSR landing experience with regional highlights and curated discovery.",
       },
@@ -187,10 +189,10 @@ export const works: WorkItem[] = [
         id: "web-mobile",
         label: "Mobile View",
         device: "mobile",
-        asset: "/works/experience-east-asean/web-home-mobile.webp",
-        animatedScroll: true,
-        pinWebNavbar: true,
-        navbarAsset: "/works/experience-east-asean/navbar-mobile.webp",
+        asset: "/works/experience-east-asean/web/web-home-mobile.mp4",
+        av1: "/works/experience-east-asean/web/web-home-mobile.av1.mp4",
+        mediaType: "video",
+        poster: "/works/experience-east-asean/web/web-home-mobile-poster.webp",
         caption: "Responsive mobile layout built for travelers browsing across Southeast Asia.",
       },
       {
@@ -198,49 +200,39 @@ export const works: WorkItem[] = [
         label: "Connectivity Map",
         device: "desktop",
         asset: "/works/experience-east-asean/new/connectivity-map.mp4",
+        av1: "/works/experience-east-asean/new/connectivity-map.av1.mp4",
         mediaType: "video",
         poster: "/works/experience-east-asean/new/connectivity-map-poster.webp",
-        caption: "Recorded live: Mapbox GL fly-to from the regional overview into Sabah, Palawan and Mindanao, driven by the map's own Focus Area filter.",
+        caption: "Mapbox GL fly-to from the regional overview into Sabah, Palawan and Mindanao, driven by the map's own Focus Area filter.",
       },
       {
         id: "flipbook-demo",
         label: "3D Flipbook",
         device: "desktop",
         asset: "/works/experience-east-asean/new/flipbook-demo.mp4",
+        av1: "/works/experience-east-asean/new/flipbook-demo.av1.mp4",
         mediaType: "video",
         poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
-        caption: "Recorded live: real St.PageFlip corner-drag page curls through \"A Guide Around Sabah\".",
+        caption: "St.PageFlip 3D page-curl viewer for regional travel guides like \"A Guide Around Sabah\".",
       },
       {
         id: "web-explore",
         label: "Explore Directory",
         device: "desktop",
-        asset: "/works/experience-east-asean/web-explore-desktop.webp",
-        animatedScroll: true,
-        pinWebNavbar: true,
-        navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
-        cursorWaypoints: [
-          { x: 28, y: 34 },
-          { x: 54, y: 42 },
-          { x: 74, y: 55 },
-          { x: 36, y: 66 },
-        ],
+        asset: "/works/experience-east-asean/web/web-explore-desktop.mp4",
+        av1: "/works/experience-east-asean/web/web-explore-desktop.av1.mp4",
+        mediaType: "video",
+        poster: "/works/experience-east-asean/web/web-explore-desktop-poster.webp",
         caption: "Multi-category filtering across focus areas, attractions, accommodations, and dining.",
       },
       {
         id: "travel-stories",
         label: "Travel Stories",
         device: "desktop",
-        asset: "/works/experience-east-asean/web-travel-stories.webp",
-        animatedScroll: true,
-        pinWebNavbar: true,
-        navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
-        cursorWaypoints: [
-          { x: 48, y: 45 },
-          { x: 24, y: 58 },
-          { x: 76, y: 58 },
-          { x: 52, y: 68 },
-        ],
+        asset: "/works/experience-east-asean/web/web-travel-stories.mp4",
+        av1: "/works/experience-east-asean/web/web-travel-stories.av1.mp4",
+        mediaType: "video",
+        poster: "/works/experience-east-asean/web/web-travel-stories-poster.webp",
         caption: "Editorial travel stories authored in TipTap v3 and rendered with sanitized HTML.",
       },
       {
@@ -321,6 +313,7 @@ export const works: WorkItem[] = [
         name: "feature-flipbook-viewer",
         title: "3D Flipbook Viewer",
         file: "/works/experience-east-asean/new/flipbook-demo.mp4",
+        av1: "/works/experience-east-asean/new/flipbook-demo.av1.mp4",
         mediaType: "video",
         poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
         caption: "In-browser 3D page-turning brochure reader built with pdfjs-dist and page-flip.",
