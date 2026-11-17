@@ -38,11 +38,18 @@
     <link rel="preload" as="image" href="/profile-light.png" />
     <link rel="preload" as="image" href="/profile-dark.png" />
     <title>GeeJayJay</title>
+    <!-- tab icon follows the Light / Dark mode (swapped by ThemeContext) -->
+    <link id="tab-icon" rel="icon" type="image/png" sizes="32x32" href="/favicon-light-32.png" />
+    <link id="tab-icon-hd" rel="icon" type="image/png" sizes="64x64" href="/favicon-light-64.png" />
+    <link id="touch-icon" rel="apple-touch-icon" sizes="180x180" href="/favicon-light-180.png" />
     <script>
-      // Apply the saved persona before first paint to avoid a flash.
+      // Apply the saved persona (page colours and tab icon) before first paint to avoid a flash.
       try {
         if (localStorage.getItem("portfolio-theme") === "dark") {
           document.documentElement.classList.add("dark");
+          document.getElementById("tab-icon").href = "/favicon-dark-32.png";
+          document.getElementById("tab-icon-hd").href = "/favicon-dark-64.png";
+          document.getElementById("touch-icon").href = "/favicon-dark-180.png";
         }
       } catch (e) {}
     </script>

@@ -101,6 +101,19 @@ function setSweepVars(next: Theme, dir: SweepDir, ms: number) {
   }
 }
 
+/** Point the tab icon (and the home-screen icon) at the logo for the given mode. */
+function setTabIcon(theme: Theme) {
+  const icons: [string, string][] = [
+    ["link#tab-icon", `/favicon-${theme}-32.png`],
+    ["link#tab-icon-hd", `/favicon-${theme}-64.png`],
+    ["link#touch-icon", `/favicon-${theme}-180.png`],
+  ];
+  for (const [selector, href] of icons) {
+    const link = document.querySelector<HTMLLinkElement>(selector);
+    if (link && !link.href.endsWith(href)) link.href = href;
+  }
+}
+
 function canSweep() {
   return (
     typeof document.startViewTransition === "function" &&
@@ -176,6 +189,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       // storage unavailable — the choice just won't persist
     }
+  }, [theme, isIntro]);
+
+  // The browser tab icon follows the chosen mode (not the brief intro sweep).
+  useEffect(() => {
+    if (isIntro) return;
+    setTabIcon(theme);
   }, [theme, isIntro]);
 
   const toggleTheme = useCallback(() => {
