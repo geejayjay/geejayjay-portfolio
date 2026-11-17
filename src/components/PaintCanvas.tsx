@@ -128,6 +128,10 @@ type Stroke = {
   liftMs: number;
   /** varied time when an unclicked hover stroke closes itself so it isn't continuous */
   closeAt: number;
+  /** per-stroke brush weight multiplier so strokes vary from fine to broad */
+  weight: number;
+  /** per-stroke opacity multiplier for unclicked hover strokes */
+  hoverAlpha: number;
 };
 
 type Splash = {
@@ -430,6 +434,17 @@ export default function PaintCanvas() {
       active = null;
     };
 
+    /**
+     * Varied cooldown between unclicked strokes so continuity is rare and gaps
+     * range from short breaths to long clean spans.
+     */
+    const nextHoverGap = () => {
+      const roll = Math.random();
+      if (roll < 0.25) return rand(260, 620);
+      if (roll < 0.75) return rand(700, 1500);
+      return rand(1600, 2800);
+    };
+
     const frame = (now: number) => {
       const sx = window.scrollX;
       const sy = window.scrollY;
@@ -447,7 +462,7 @@ export default function PaintCanvas() {
         const hoverTimedOut = !pressed && now >= active.closeAt;
         if (idleTimedOut || hoverTimedOut) {
           endStroke(now);
-          if (!pressed) resumeAt = now + rand(140, 520);
+          if (!pressed) resumeAt = now + nextHoverGap();
         }
       }
 
@@ -488,15 +503,16 @@ export default function PaintCanvas() {
         // the whole shape goes down in its first colour, so it has no seams...
         ctx.fillStyle = PIGMENTS[st.hues[0].c];
 
-        // the faint line, full length
+        // the faint line, full length (varied opacity per hover stroke)
+        const hoverStrength = HOVER_STRENGTH * st.hoverAlpha;
         for (let li = 0; li < LAYERS.length; li++) {
-          ctx.globalAlpha = LAYERS[li].alpha * HOVER_STRENGTH * alpha;
+          ctx.globalAlpha = LAYERS[li].alpha * hoverStrength * alpha;
           ribbon(pts, fades, li, LAYERS[li].scale, false, 0, pts.length - 1, !st.trimmed, st.ended);
         }
         // the bold wash, swelling out of it wherever the brush was pressed
         if (st.pressedEver) {
           for (let li = 0; li < LAYERS.length; li++) {
-            ctx.globalAlpha = LAYERS[li].alpha * (1 - HOVER_STRENGTH) * alpha;
+            ctx.globalAlpha = LAYERS[li].alpha * (1 - hoverStrength) * alpha;
             ribbon(pts, fades, li, LAYERS[li].scale, true, 0, pts.length - 1, !st.trimmed, st.ended);
           }
         }
@@ -546,7 +562,7 @@ export default function PaintCanvas() {
 
         // dry-brush ends: where the brush touched down, and where it lifted
         const endStrength = (p: Pt, f: number) =>
-          0.5 * alpha * f * (HOVER_STRENGTH + (1 - HOVER_STRENGTH) * p.press);
+          0.5 * alpha * f * (hoverStrength + (1 - hoverStrength) * p.press);
         if (!st.trimmed && fades[0] > 0.05) {
           ctx.globalAlpha = endStrength(pts[0], fades[0]);
           ctx.fillStyle = PIGMENTS[tailColour];
@@ -693,10 +709,12 @@ export default function PaintCanvas() {
 
     const beginStroke = (now = performance.now()) => {
       endStroke(now);
-      // Vary both the idle pause timeout and the unclicked hover duration so
-      // unclicked movement breaks naturally into varied-length strokes.
-      const shortRun = Math.random() < 0.35;
-      const hoverLife = shortRun ? rand(180, 460) : rand(480, 1250);
+      // Continuous hover runs are rare; most unclicked strokes are brief wisps
+      // with wide, varied gaps between them.
+      const longRun = Math.random() < 0.16;
+      const hoverLife = longRun ? rand(580, 1050) : rand(240, 500);
+      const weight = pressed ? rand(0.85, 1.35) : rand(0.72, 1.55);
+      const hoverAlpha = rand(0.42, 1.0);
       active = {
         pts: [],
         c: pigment,
@@ -714,8 +732,10 @@ export default function PaintCanvas() {
         nextDot: rand(30, 120),
         nextGap: rand(45, 220),
         nextHue: rand(480, 1400),
-        liftMs: pressed ? rand(650, 1100) : rand(160, 620),
+        liftMs: pressed ? rand(650, 1100) : rand(200, 480),
         closeAt: now + hoverLife,
+        weight,
+        hoverAlpha,
       };
       strokes.push(active);
     };
@@ -836,11 +856,11 @@ export default function PaintCanvas() {
 
     const moveTo = (x: number, y: number, now: number) => {
       // When not clicked, close the active stroke once its varied time is up
-      // and wait out a varied pause so the hover brush is not continuous.
+      // and wait out a wide, varied gap so continuity is rare.
       if (!pressed) {
         if (active && now >= active.closeAt) {
           endStroke(now);
-          resumeAt = now + rand(140, 520);
+          resumeAt = now + nextHoverGap();
           last = { x, y, t: now };
           return;
         }
@@ -853,7 +873,7 @@ export default function PaintCanvas() {
       if (!last || !active || now - last.t > active.liftMs) {
         if (active && last && now - last.t > active.liftMs && !pressed) {
           endStroke(now);
-          resumeAt = now + rand(120, 420);
+          resumeAt = now + nextHoverGap();
           last = { x, y, t: now };
           return;
         }
@@ -861,8 +881,8 @@ export default function PaintCanvas() {
         dip();
         last = { x, y, t: now };
         press = pressed ? 1 : 0;
-        width = pressed ? 9 : 3;
         beginStroke(now);
+        width = (pressed ? 9 : 3) * active!.weight;
         return;
       }
 
@@ -893,13 +913,14 @@ export default function PaintCanvas() {
       press += ((pressed ? 1 : 0) - press) * 0.2;
       if (press < 0.005) press = 0;
 
-      // slow = pressed down and broad; fast = light and narrow
+      // slow = pressed down and broad; fast = light and narrow, scaled by each stroke's brush weight
       const speed = dist / Math.max(now - last.t, 1);
-      const target = pressed
+      const baseTarget = pressed
         ? Math.max(9, Math.min(15, 15 - speed * 2.6))
         : overText
           ? Math.max(1.4, Math.min(2.2, 2.2 - speed * 0.5)) // hairline behind text
           : Math.max(3.5, Math.min(6, 6 - speed * 1.4));
+      const target = baseTarget * active.weight;
       width += (target - width) * 0.16;
 
       if (active.pts.length === 0) addPoint(last.x, last.y, now);
@@ -982,7 +1003,7 @@ export default function PaintCanvas() {
         const now = performance.now();
         pressed = false;
         endStroke(now);
-        resumeAt = now + rand(160, 480);
+        resumeAt = now + nextHoverGap();
         kick();
       } else {
         pressed = false;
