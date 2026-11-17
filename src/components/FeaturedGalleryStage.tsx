@@ -70,6 +70,8 @@ export default function FeaturedGalleryStage({
   const [sceneIdx, setSceneIdx] = useState(0);
   const [areaIdx, setAreaIdx] = useState(0);
   const [areasVisible, setAreasVisible] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const dScreenRef = useRef<HTMLDivElement>(null);
@@ -87,7 +89,30 @@ export default function FeaturedGalleryStage({
   const scene = SCENES[sceneIdx] ?? SCENES[0];
   const area = AREA_STATES[areaIdx] ?? AREA_STATES[0];
 
+  // Defer loading media & running rAF until the stage is near/in the viewport
   useEffect(() => {
+    const el = stageRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setHasEntered(true);
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        if (entry.isIntersecting) setHasEntered(true);
+        setIsVisible(entry.isIntersecting);
+      },
+      { rootMargin: "350px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
     const s = SCENES[sceneIdx];
     if (!s) return;
     if (s.type === "video" && dVideoRef.current) {
@@ -98,9 +123,13 @@ export default function FeaturedGalleryStage({
     } else if (dScrollStageRef.current) {
       dScrollStageRef.current.style.transform = "translate3d(0, 0, 0)";
     }
-  }, [sceneIdx]);
+  }, [sceneIdx, isVisible]);
 
   useEffect(() => {
+    if (!isVisible) {
+      dVideoRef.current?.pause();
+      return;
+    }
     let raf = 0;
     let lastTs = performance.now();
 
@@ -169,7 +198,7 @@ export default function FeaturedGalleryStage({
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [isVisible]);
 
   return (
     <div
@@ -246,96 +275,104 @@ export default function FeaturedGalleryStage({
         </div>
 
         <div ref={dScreenRef} className="relative flex-1 overflow-hidden bg-slate-950/5">
-          {scene.type === "video" ? (
-            <video
-              ref={dVideoRef}
-              key={scene.src}
-              src={scene.src}
-              poster={scene.poster}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="block h-full w-full object-cover object-center"
-            />
-          ) : (
-            <div ref={dScrollStageRef} className="relative w-full will-change-transform">
-              <img
-                ref={dImgRef}
-                src={scene.src}
-                alt={scene.label}
-                className="block h-auto w-full"
-              />
-              {scene.hasAreasHover && (
-                <div
-                  className={cn(
-                    "pointer-events-none absolute left-[11.46%] top-[23.79%] h-[12.06%] w-[77.08%] transition-opacity duration-200",
-                    areasVisible ? "opacity-100" : "opacity-0",
-                  )}
-                >
+          {hasEntered && (
+            <>
+              {scene.type === "video" ? (
+                <video
+                  ref={dVideoRef}
+                  key={scene.src}
+                  src={scene.src}
+                  poster={scene.poster}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="block h-full w-full object-cover object-center"
+                />
+              ) : (
+                <div ref={dScrollStageRef} className="relative w-full will-change-transform">
                   <img
-                    src={area.src}
-                    alt=""
-                    className="block h-full w-full rounded object-cover"
+                    ref={dImgRef}
+                    src={scene.src}
+                    alt={scene.label}
+                    decoding="async"
+                    className="block h-auto w-full"
                   />
-                  <div
-                    style={{
-                      left: `${area.x}%`,
-                      top: `${area.y}%`,
-                      transition:
-                        "left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
-                    }}
-                    className="absolute -translate-x-0.5 -translate-y-0.5"
-                  >
-                    <span className="absolute -left-1.5 -top-1.5 h-5 w-5 animate-ping rounded-full bg-brand/45" />
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="relative h-4 w-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                  {scene.hasAreasHover && (
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute left-[11.46%] top-[23.79%] h-[12.06%] w-[77.08%] transition-opacity duration-200",
+                        areasVisible ? "opacity-100" : "opacity-0",
+                      )}
                     >
-                      <path
-                        d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
-                        fill="#ffffff"
-                        stroke="#0f172a"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
+                      <img
+                        src={area.src}
+                        alt=""
+                        decoding="async"
+                        className="block h-full w-full rounded object-cover"
                       />
-                    </svg>
-                  </div>
+                      <div
+                        style={{
+                          left: `${area.x}%`,
+                          top: `${area.y}%`,
+                          transition:
+                            "left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
+                        }}
+                        className="absolute -translate-x-0.5 -translate-y-0.5"
+                      >
+                        <span className="absolute -left-1.5 -top-1.5 h-5 w-5 animate-ping rounded-full bg-brand/45" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="relative h-4 w-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                        >
+                          <path
+                            d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
+                            fill="#ffffff"
+                            stroke="#0f172a"
+                            strokeWidth="1.8"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Pinned Public Web Navbar */}
-          {scene.pinWebNavbar && (
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute left-0 top-0 z-10 h-0 w-full overflow-hidden pb-[4.44%] shadow-[0_4px_14px_rgba(0,0,0,0.22)]"
-            >
-              <img src={scene.src} alt="" className="block h-auto w-full" />
-            </div>
-          )}
+              {/* Pinned Public Web Navbar */}
+              {scene.pinWebNavbar && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-0 top-0 z-10 h-0 w-full overflow-hidden pb-[4.44%] shadow-[0_4px_14px_rgba(0,0,0,0.22)]"
+                >
+                  <img src={scene.src} alt="" decoding="async" className="block h-auto w-full" />
+                </div>
+              )}
 
-          {/* Pinned Admin Header & Sidebar */}
-          {scene.pinAdminChrome && (
-            <>
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute left-0 top-0 z-10 h-0 w-full overflow-hidden pb-[3.55%]"
-              >
-                <img src={scene.src} alt="" className="block h-auto w-full" />
-              </div>
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[15.6%] overflow-hidden bg-[#0f172a]"
-              >
-                <img
-                  src={scene.src}
-                  alt=""
-                  className="block h-auto w-[641.03%] max-w-none"
-                />
-              </div>
+              {/* Pinned Admin Header & Sidebar */}
+              {scene.pinAdminChrome && (
+                <>
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-0 top-0 z-10 h-0 w-full overflow-hidden pb-[3.55%]"
+                  >
+                    <img src={scene.src} alt="" decoding="async" className="block h-auto w-full" />
+                  </div>
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[15.6%] overflow-hidden bg-[#0f172a]"
+                  >
+                    <img
+                      src={scene.src}
+                      alt=""
+                      decoding="async"
+                      className="block h-auto w-[641.03%] max-w-none"
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -353,12 +390,15 @@ export default function FeaturedGalleryStage({
       >
         <div className="absolute left-1/2 top-1.5 z-10 h-2 w-9 -translate-x-1/2 rounded-full bg-slate-950" />
         <div ref={mScreenRef} className="h-full w-full overflow-hidden">
-          <img
-            ref={mImgRef}
-            src="/works/experience-east-asean/web-home-mobile.webp"
-            alt="Experience East ASEAN Mobile"
-            className="block h-auto w-full will-change-transform"
-          />
+          {hasEntered && (
+            <img
+              ref={mImgRef}
+              src="/works/experience-east-asean/web-home-mobile.webp"
+              alt="Experience East ASEAN Mobile"
+              decoding="async"
+              className="block h-auto w-full will-change-transform"
+            />
+          )}
         </div>
       </div>
 

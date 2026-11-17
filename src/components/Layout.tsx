@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "./ThemeToggle";
-import PaintCanvas from "./PaintCanvas";
-import CodeBackdrop from "./CodeBackdrop";
 import { socialLinks } from "./socialLinks";
 import { useTheme } from "@/hooks/ThemeContext";
+
+const PaintCanvas = lazy(() => import("./PaintCanvas"));
+const CodeBackdrop = lazy(() => import("./CodeBackdrop"));
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -101,7 +102,9 @@ export default function Layout({ children }: LayoutProps) {
           </>
         )}
       </div>
-      {isDark ? <CodeBackdrop /> : <PaintCanvas />}
+      <Suspense fallback={null}>
+        {isDark ? <CodeBackdrop /> : <PaintCanvas />}
+      </Suspense>
 
       {/* ---------- Top bar ---------- */}
       <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-5 py-4 sm:px-8 md:px-10">
