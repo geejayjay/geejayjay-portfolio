@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Download, ArrowDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "@/hooks/ThemeContext";
@@ -90,9 +91,9 @@ export default function HeroSection() {
               <Download className="h-5 w-5" />
               {isDark ? "resume.pdf" : "Resume"}
             </a>
-            <a href="#work" className="btn btn-ghost">
+            <Link to="/works" className="btn btn-ghost">
               {isDark ? "ls ./work" : "See my work"}
-            </a>
+            </Link>
           </div>
 
           {/* hint about the cursor toy — only meaningful with a mouse */}
