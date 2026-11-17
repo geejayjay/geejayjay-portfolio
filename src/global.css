@@ -575,6 +575,31 @@ html[data-sweep] .sweep-fx {
   }
 }
 
+/* Smooth vertical pan for full-page .webp showcase mockups */
+@keyframes showcase-pan {
+  0%,
+  8% {
+    transform: translateY(0);
+  }
+  46%,
+  54% {
+    transform: translateY(calc(-100% + var(--frame-h, 420px)));
+  }
+  92%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.showcase-pan {
+  animation: showcase-pan 22s ease-in-out infinite;
+}
+
+.showcase-pan:hover,
+.showcase-pan-paused {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

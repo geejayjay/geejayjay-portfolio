@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "./ThemeToggle";
 import PaintCanvas from "./PaintCanvas";
@@ -24,10 +25,14 @@ export default function Layout({ children }: LayoutProps) {
   const [active, setActive] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isDark } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHome = location.pathname === "/";
 
   // Track which page the reader is on: the last section whose top has passed
   // the middle of the viewport. Measured on scroll so it can never lag behind.
   useEffect(() => {
+    if (!isHome) return;
     let raf = 0;
     const measure = () => {
       raf = 0;
@@ -53,7 +58,7 @@ export default function Layout({ children }: LayoutProps) {
       window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [isHome]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -64,6 +69,10 @@ export default function Layout({ children }: LayoutProps) {
 
   const goTo = (id: string) => {
     setMenuOpen(false);
+    if (!isHome) {
+      navigate(id === "home" ? "/" : `/#${id}`);
+      return;
+    }
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -115,6 +124,30 @@ export default function Layout({ children }: LayoutProps) {
         </button>
 
         <div className="flex items-center gap-3 sm:gap-5">
+          {!isHome && (
+            <div className="hidden items-center gap-4 sm:flex">
+              <Link
+                to="/"
+                className={cn(
+                  "text-soft transition-colors hover:text-brand",
+                  isDark ? "font-mono text-xs" : "font-hand text-xl",
+                )}
+              >
+                {isDark ? "~/home" : "Home"}
+              </Link>
+              {location.pathname !== "/works" && (
+                <Link
+                  to="/works"
+                  className={cn(
+                    "text-soft transition-colors hover:text-brand",
+                    isDark ? "font-mono text-xs" : "font-hand text-xl",
+                  )}
+                >
+                  {isDark ? "./works" : "All Works"}
+                </Link>
+              )}
+            </div>
+          )}
           <div className="hidden items-center gap-4 lg:flex">
             {socialLinks.map((link) => (
               <a
@@ -143,70 +176,74 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      {/* ---------- Page rail (desktop) ---------- */}
-      <nav
-        aria-label="Sections"
-        className="fixed right-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-5 md:flex lg:right-8"
-      >
-        {pages.map((p, i) => {
-          const on = i === active;
-          return (
-            <button
-              key={p.id}
-              onClick={() => goTo(p.id)}
-              aria-current={on ? "true" : undefined}
-              className="group flex items-center gap-3"
-            >
-              <span
-                className={cn(
-                  "transition-all duration-300",
-                  isDark ? "font-mono text-xs" : "font-hand text-xl leading-none",
-                  on
-                    ? "translate-x-0 text-brand opacity-100"
-                    : "translate-x-2 text-soft opacity-0 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:opacity-100",
-                )}
+      {/* ---------- Page rail (desktop, home only) ---------- */}
+      {isHome && (
+        <nav
+          aria-label="Sections"
+          className="fixed right-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-end gap-5 md:flex lg:right-8"
+        >
+          {pages.map((p, i) => {
+            const on = i === active;
+            return (
+              <button
+                key={p.id}
+                onClick={() => goTo(p.id)}
+                aria-current={on ? "true" : undefined}
+                className="group flex items-center gap-3"
               >
-                {isDark ? `${pad(i + 1)}.${p.label.toLowerCase()}` : p.label}
-              </span>
-              <span
-                className={cn(
-                  "block transition-all duration-300",
-                  isDark
-                    ? cn(
-                        "h-[3px]",
-                        on
-                          ? "w-8 bg-brand shadow-[0_0_10px_rgb(var(--c-accent))]"
-                          : "w-4 bg-soft/50 group-hover:bg-brand",
-                      )
-                    : cn(
-                        "rounded-[50%_45%_55%_48%]",
-                        on ? "h-4 w-4 bg-brand" : "h-2.5 w-2.5 bg-ink/25 group-hover:bg-brand",
-                      ),
-                )}
-              />
-            </button>
-          );
-        })}
-      </nav>
+                <span
+                  className={cn(
+                    "transition-all duration-300",
+                    isDark ? "font-mono text-xs" : "font-hand text-xl leading-none",
+                    on
+                      ? "translate-x-0 text-brand opacity-100"
+                      : "translate-x-2 text-soft opacity-0 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:opacity-100",
+                  )}
+                >
+                  {isDark ? `${pad(i + 1)}.${p.label.toLowerCase()}` : p.label}
+                </span>
+                <span
+                  className={cn(
+                    "block transition-all duration-300",
+                    isDark
+                      ? cn(
+                          "h-[3px]",
+                          on
+                            ? "w-8 bg-brand shadow-[0_0_10px_rgb(var(--c-accent))]"
+                            : "w-4 bg-soft/50 group-hover:bg-brand",
+                        )
+                      : cn(
+                          "rounded-[50%_45%_55%_48%]",
+                          on ? "h-4 w-4 bg-brand" : "h-2.5 w-2.5 bg-ink/25 group-hover:bg-brand",
+                        ),
+                  )}
+                />
+              </button>
+            );
+          })}
+        </nav>
+      )}
 
-      {/* ---------- Page counter ---------- */}
-      <div
-        aria-hidden="true"
-        className={cn(
-          "fixed bottom-5 left-10 z-40 hidden text-soft md:block",
-          isDark ? "font-mono text-xs" : "font-hand text-xl",
-        )}
-      >
-        {isDark ? (
-          <>
-            [<span className="text-brand">{pad(active + 1)}</span>/{pad(pages.length)}]
-          </>
-        ) : (
-          <>
-            page <span className="text-brand">{active + 1}</span> of {pages.length}
-          </>
-        )}
-      </div>
+      {/* ---------- Page counter (home only) ---------- */}
+      {isHome && (
+        <div
+          aria-hidden="true"
+          className={cn(
+            "fixed bottom-5 left-10 z-40 hidden text-soft md:block",
+            isDark ? "font-mono text-xs" : "font-hand text-xl",
+          )}
+        >
+          {isDark ? (
+            <>
+              [<span className="text-brand">{pad(active + 1)}</span>/{pad(pages.length)}]
+            </>
+          ) : (
+            <>
+              page <span className="text-brand">{active + 1}</span> of {pages.length}
+            </>
+          )}
+        </div>
+      )}
 
       {/* ---------- Full-screen menu (mobile) ---------- */}
       {menuOpen && (
