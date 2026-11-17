@@ -936,16 +936,21 @@ export default function PaintCanvas() {
       last = { x, y, t: now };
     };
 
-    /** a drop of paint landing: one round splash and a few flecks thrown off it */
-    const splash = (x: number, y: number) => {
+    /** a drop of paint landing: one round splash sized to the brush and a few flecks thrown off it */
+    const splash = (x: number, y: number, radius = 10) => {
       if (pigment < 0) dip();
       const shape = () => Array.from({ length: 10 }, Math.random);
-      const blobs = [{ x, y, r: rand(7, 11), shape: shape() }];
+      const blobs = [{ x, y, r: radius, shape: shape() }];
       const flecks = 3 + ((Math.random() * 3) | 0);
       for (let i = 0; i < flecks; i++) {
         const a = Math.random() * Math.PI * 2;
-        const d = rand(18, 46);
-        blobs.push({ x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, r: rand(1.2, 4), shape: shape() });
+        const d = radius * rand(1.8, 3.8);
+        blobs.push({
+          x: x + Math.cos(a) * d,
+          y: y + Math.sin(a) * d,
+          r: Math.max(1, radius * rand(0.14, 0.36)),
+          shape: shape(),
+        });
       }
       splashes.push({ t: performance.now(), c: pigment, blobs });
       if (splashes.length > 24) splashes.shift();
@@ -983,14 +988,20 @@ export default function PaintCanvas() {
       if (active) active.liftMs = rand(650, 1100);
       // dragging to paint shouldn't select the page text
       document.documentElement.classList.add("is-painting");
-      splash(e.clientX + window.scrollX, e.clientY + window.scrollY);
+      const px = e.clientX + window.scrollX;
+      const py = e.clientY + window.scrollY;
       if (!active) {
         dip();
-        last = { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY, t: now };
+        last = { x: px, y: py, t: now };
         press = 1;
-        width = 9;
         beginStroke(now);
+        width = 9 * active!.weight;
+      } else {
+        active.liftMs = rand(650, 1100);
+        press = 1;
+        width = Math.max(width, 9 * active.weight);
       }
+      splash(px, py, width);
     };
 
     /** touch screens: each tap drops a splash in a fresh colour */
