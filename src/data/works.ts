@@ -14,8 +14,14 @@ export type ShowcaseView = {
   animatedScroll?: boolean;
   hasAreasHover?: boolean;
   pinWebNavbar?: boolean;
+  /**
+   * The site header in its scrolled state, foreground only (transparent PNG/WebP).
+   * Shown over a translucent blurred bar once the page scrolls, like the live site.
+   */
+  navbarAsset?: string;
   pinAdminChrome?: boolean;
-  isMapMock?: boolean;
+  /** Full-height CMS sidebar (menu part) with this page's item highlighted. */
+  adminSidebar?: string;
   cursorWaypoints?: { x: number; y: number }[];
   jumps?: { label: string; pct: number }[];
   caption: string;
@@ -167,11 +173,12 @@ export const works: WorkItem[] = [
         animatedScroll: true,
         hasAreasHover: true,
         pinWebNavbar: true,
+        navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
         jumps: [
           { label: "Top", pct: 0 },
-          { label: "Areas Map", pct: 22 },
-          { label: "Attractions", pct: 50 },
-          { label: "Stories", pct: 75 },
+          { label: "Areas Map", pct: 18 },
+          { label: "Attractions", pct: 33 },
+          { label: "Stories", pct: 47 },
           { label: "Footer", pct: 100 },
         ],
         caption: "Full-page Nuxt 4 SSR landing experience with regional highlights and curated discovery.",
@@ -183,25 +190,26 @@ export const works: WorkItem[] = [
         asset: "/works/experience-east-asean/web-home-mobile.webp",
         animatedScroll: true,
         pinWebNavbar: true,
+        navbarAsset: "/works/experience-east-asean/navbar-mobile.webp",
         caption: "Responsive mobile layout built for travelers browsing across Southeast Asia.",
       },
       {
         id: "connectivity-map",
         label: "Connectivity Map",
         device: "desktop",
-        asset: "/works/experience-east-asean/loops/connectivity-map.webm",
+        asset: "/works/experience-east-asean/new/connectivity-map.mp4",
         mediaType: "video",
-        poster: "/works/experience-east-asean/web-connectivity-map.webp",
-        caption: "6.4s Mapbox GL fly-to zoom & regional connectivity corridor micro-loop.",
+        poster: "/works/experience-east-asean/new/connectivity-map-poster.webp",
+        caption: "Recorded live: Mapbox GL fly-to from the regional overview into Sabah, Palawan and Mindanao, driven by the map's own Focus Area filter.",
       },
       {
         id: "flipbook-demo",
         label: "3D Flipbook",
         device: "desktop",
-        asset: "/works/experience-east-asean/loops/flipbook-demo.webm",
+        asset: "/works/experience-east-asean/new/flipbook-demo.mp4",
         mediaType: "video",
-        poster: "/works/experience-east-asean/details/feature-flipbook-viewer.webp",
-        caption: "5s interactive 3D PDF flipbook page-turning micro-loop (pdfjs-dist + page-flip).",
+        poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
+        caption: "Recorded live: real St.PageFlip corner-drag page curls through \"A Guide Around Sabah\".",
       },
       {
         id: "web-explore",
@@ -210,6 +218,7 @@ export const works: WorkItem[] = [
         asset: "/works/experience-east-asean/web-explore-desktop.webp",
         animatedScroll: true,
         pinWebNavbar: true,
+        navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
         cursorWaypoints: [
           { x: 28, y: 34 },
           { x: 54, y: 42 },
@@ -225,6 +234,7 @@ export const works: WorkItem[] = [
         asset: "/works/experience-east-asean/web-travel-stories.webp",
         animatedScroll: true,
         pinWebNavbar: true,
+        navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
         cursorWaypoints: [
           { x: 48, y: 45 },
           { x: 24, y: 58 },
@@ -240,6 +250,7 @@ export const works: WorkItem[] = [
         asset: "/works/experience-east-asean/admin/admin-dashboard.webp",
         animatedScroll: true,
         pinAdminChrome: true,
+        adminSidebar: "/works/experience-east-asean/admin/sidebar-dashboard.webp",
         cursorWaypoints: [
           { x: 28, y: 26 },
           { x: 48, y: 26 },
@@ -255,6 +266,7 @@ export const works: WorkItem[] = [
         asset: "/works/experience-east-asean/admin/admin-editor.webp",
         animatedScroll: true,
         pinAdminChrome: true,
+        adminSidebar: "/works/experience-east-asean/admin/sidebar-editor.webp",
         cursorWaypoints: [
           { x: 38, y: 30 },
           { x: 82, y: 46 },
@@ -267,9 +279,10 @@ export const works: WorkItem[] = [
         id: "admin-tables",
         label: "Admin Tables",
         device: "desktop",
-        asset: "/works/experience-east-asean/admin/admin-partners.webp",
+        asset: "/works/experience-east-asean/new/admin-tables.webp",
         animatedScroll: false,
         pinAdminChrome: true,
+        adminSidebar: "/works/experience-east-asean/admin/sidebar-tables.webp",
         cursorWaypoints: [
           { x: 32, y: 22 },
           { x: 42, y: 38 },
@@ -307,9 +320,9 @@ export const works: WorkItem[] = [
       {
         name: "feature-flipbook-viewer",
         title: "3D Flipbook Viewer",
-        file: "/works/experience-east-asean/loops/flipbook-demo.webm",
+        file: "/works/experience-east-asean/new/flipbook-demo.mp4",
         mediaType: "video",
-        poster: "/works/experience-east-asean/details/feature-flipbook-viewer.webp",
+        poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
         caption: "In-browser 3D page-turning brochure reader built with pdfjs-dist and page-flip.",
       },
       {

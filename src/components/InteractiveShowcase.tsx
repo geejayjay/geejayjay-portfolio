@@ -3,7 +3,6 @@ import { Monitor, Pause, Play, Smartphone } from "lucide-react";
 import { isVideoAsset, ShowcaseView } from "@/data/works";
 import { useTheme } from "@/hooks/ThemeContext";
 import { cn } from "@/lib/utils";
-import ConnectivityMapMock from "./ConnectivityMapMock";
 
 interface InteractiveShowcaseProps {
   title: string;
@@ -49,9 +48,9 @@ export default function InteractiveShowcase({
 
   const activeView = views.find((v) => v.id === activeId) ?? views[0];
   const isVideo = Boolean(
-    activeView && !activeView.isMapMock && isVideoAsset(activeView.asset, activeView.mediaType),
+    activeView && isVideoAsset(activeView.asset, activeView.mediaType),
   );
-  const isScrollable = Boolean(activeView?.animatedScroll) && !activeView?.isMapMock && !isVideo;
+  const isScrollable = Boolean(activeView?.animatedScroll) && !isVideo;
   const hasPlaybackControls = isScrollable || isVideo;
   const isMobile = activeView?.device === "mobile";
 
@@ -99,22 +98,24 @@ export default function InteractiveShowcase({
     }
   }, [activeId]);
 
-  // Choreographed cursor waypoints timer (runs on both scrolling & static views)
+  // Choreographed cursor waypoints timer (runs on scrolling & static views; video views sync via onTimeUpdate)
   useEffect(() => {
     const pts = activeView?.cursorWaypoints;
-    if (!pts || pts.length === 0 || activeView.isMapMock || isVideo) return;
+    if (!pts || pts.length === 0 || isVideo) return;
     const id = window.setInterval(() => {
-      if (!hoveringRef.current && !draggingRef.current) {
+      if (isPlaying && !draggingRef.current) {
         setTourIdx((prev) => (prev + 1) % pts.length);
       }
     }, 1600);
     return () => window.clearInterval(id);
-  }, [activeView?.id, activeView?.cursorWaypoints, activeView?.isMapMock, isVideo]);
+  }, [activeView?.id, activeView?.cursorWaypoints, isVideo, isPlaying]);
 
-  // Sync video play/pause & playbackRate
+  // Sync video play/pause & playbackRate (force muted in DOM so browsers allow autoplay)
   useEffect(() => {
     const video = videoRef.current;
     if (!isVideo || !video) return;
+    video.muted = true;
+    video.defaultMuted = true;
     video.playbackRate = SPEEDS[speedIdx];
     if (isPlaying) {
       video.play().catch(() => {});
@@ -151,7 +152,7 @@ export default function InteractiveShowcase({
       lastTs = ts;
 
       const p = progressRef.current;
-      const inAreasBand = Boolean(activeView?.hasAreasHover) && p >= 0.14 && p <= 0.34;
+      const inAreasBand = Boolean(activeView?.hasAreasHover) && p >= 0.12 && p <= 0.23;
       if (inAreasBand) {
         areaTimerRef.current += dt;
         const nextAreaIdx = Math.floor(areaTimerRef.current / 1.1) % AREA_STATES.length;
@@ -161,11 +162,11 @@ export default function InteractiveShowcase({
         setAreasVisible(false);
       }
 
-      if (isPlaying && !hoveringRef.current && !draggingRef.current) {
+      if (isPlaying && !draggingRef.current) {
         const max = getMaxScroll();
         if (max > 0) {
           // Keep scrolling speed consistent with only a very subtle ease over the Areas band
-          const inSlowZone = Boolean(activeView?.hasAreasHover) && p >= 0.16 && p <= 0.30;
+          const inSlowZone = Boolean(activeView?.hasAreasHover) && p >= 0.14 && p <= 0.21;
           const speedFactor = inSlowZone ? 0.85 : 1;
           const pxPerSec = 58 * SPEEDS[speedIdx] * speedFactor;
           const delta = (pxPerSec * dt) / max;
@@ -216,31 +217,80 @@ export default function InteractiveShowcase({
   const currentArea = AREA_STATES[areaIdx] ?? AREA_STATES[0];
 
   const renderMedia = () => {
-    if (activeView.isMapMock) {
-      return <ConnectivityMapMock />;
-    }
+    const tourCursorEl =
+      activeView.cursorWaypoints && activeView.cursorWaypoints.length > 0 ? (
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${activeView.cursorWaypoints[tourIdx % activeView.cursorWaypoints.length].x}%`,
+            top: `${activeView.cursorWaypoints[tourIdx % activeView.cursorWaypoints.length].y}%`,
+            transition:
+              "left 0.75s cubic-bezier(0.22, 1, 0.36, 1), top 0.75s cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
+          className="pointer-events-none absolute z-30 -translate-x-0.5 -translate-y-0.5"
+        >
+          <span className="absolute -left-2 -top-2 h-6 w-6 animate-ping rounded-full bg-brand/45" />
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="relative h-5 w-5 drop-shadow-[0_3px_6px_rgba(0,0,0,0.5)]"
+          >
+            <path
+              d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
+              fill="#ffffff"
+              stroke="#0f172a"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      ) : null;
 
     if (isVideo) {
       return (
-        <video
-          ref={videoRef}
-          key={activeView.id}
-          src={activeView.asset}
-          poster={activeView.poster}
-          autoPlay
-          loop
-          muted
-          playsInline
-          onTimeUpdate={(e) => {
-            const v = e.currentTarget;
-            if (v.duration) {
-              const p = v.currentTime / v.duration;
-              progressRef.current = p;
-              setProgress(p);
-            }
-          }}
-          className="block h-full w-full object-cover object-center"
-        />
+        <>
+          <video
+            ref={(el) => {
+              videoRef.current = el;
+              if (el) {
+                el.muted = true;
+                el.defaultMuted = true;
+                el.playbackRate = SPEEDS[speedIdx];
+                if (isPlaying && el.paused) {
+                  el.play().catch(() => {});
+                }
+              }
+            }}
+            key={activeView.id}
+            src={activeView.asset}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            onCanPlay={(e) => {
+              const v = e.currentTarget;
+              v.muted = true;
+              v.defaultMuted = true;
+              v.playbackRate = SPEEDS[speedIdx];
+              if (isPlaying && v.paused) v.play().catch(() => {});
+            }}
+            onTimeUpdate={(e) => {
+              const v = e.currentTarget;
+              if (v.duration) {
+                const p = v.currentTime / v.duration;
+                progressRef.current = p;
+                setProgress(p);
+                const pts = activeView.cursorWaypoints;
+                if (pts && pts.length > 0) {
+                  setTourIdx(Math.min(pts.length - 1, Math.floor(p * pts.length)));
+                }
+              }
+            }}
+            className="block h-full w-full object-cover object-center"
+          />
+          {tourCursorEl}
+        </>
       );
     }
 
@@ -263,7 +313,7 @@ export default function InteractiveShowcase({
           {activeView.hasAreasHover && (
             <div
               className={cn(
-                "pointer-events-none absolute left-[11.46%] top-[23.79%] h-[12.06%] w-[77.08%] transition-opacity duration-300",
+                "pointer-events-none absolute left-[11.25%] top-[17.196%] h-[8.495%] w-[77.613%] transition-opacity duration-300",
                 areasVisible ? "opacity-100" : "opacity-0",
               )}
             >
@@ -295,17 +345,18 @@ export default function InteractiveShowcase({
           )}
         </div>
 
-        {/* Pinned Public Web Navbar */}
-        {activeView.pinWebNavbar && (
+        {/* Pinned public header: like the live site, the solid header (with the logo)
+            fades in once the page scrolls, as a translucent blurred bar over the content. */}
+        {activeView.pinWebNavbar && activeView.navbarAsset && (
           <div
             aria-hidden="true"
             className={cn(
-              "pointer-events-none absolute left-0 top-0 z-10 h-0 w-full overflow-hidden transition-shadow duration-200",
-              isMobile ? "pb-[16.41%]" : "pb-[4.44%]",
-              progress > 0.01 && "shadow-[0_6px_20px_rgba(0,0,0,0.28)]",
+              "pointer-events-none absolute left-0 top-0 z-10 w-full transition-opacity duration-300",
+              progress > 0.004 ? "opacity-100" : "opacity-0",
             )}
           >
-            <img src={activeView.asset} alt="" className="block h-auto w-full" />
+            <div className="absolute inset-0 bg-[#134e4a]/80 shadow-lg backdrop-blur-lg" />
+            <img src={activeView.navbarAsset} alt="" className="relative block h-auto w-full" />
           </div>
         )}
 
@@ -318,47 +369,23 @@ export default function InteractiveShowcase({
             >
               <img src={activeView.asset} alt="" className="block h-auto w-full" />
             </div>
-            <div
+<div
               aria-hidden="true"
-              className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[15.6%] overflow-hidden bg-[#0f172a] shadow-md"
+              className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[16.5625%] overflow-hidden border-r border-[#0d1826] bg-[#111727] shadow-[4px_0_14px_rgba(0,0,0,0.25)]"
             >
+              <img src={activeView.adminSidebar ?? "/works/experience-east-asean/admin/sidebar-dashboard.webp"} alt="" className="block h-auto w-full" />
+              {/* account card stays pinned to the bottom, as in the real CMS */}
               <img
-                src={activeView.asset}
+                src="/works/experience-east-asean/admin/sidebar-footer.webp"
                 alt=""
-                className="block h-auto w-[641.03%] max-w-none"
+                className="absolute bottom-0 left-0 block h-auto w-full"
               />
             </div>
           </>
         )}
 
         {/* Choreographed Tour Cursor & Pulse Ring */}
-        {activeView.cursorWaypoints && activeView.cursorWaypoints.length > 0 && (
-          <div
-            aria-hidden="true"
-            style={{
-              left: `${activeView.cursorWaypoints[tourIdx % activeView.cursorWaypoints.length].x}%`,
-              top: `${activeView.cursorWaypoints[tourIdx % activeView.cursorWaypoints.length].y}%`,
-              transition:
-                "left 0.75s cubic-bezier(0.22, 1, 0.36, 1), top 0.75s cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-            className="pointer-events-none absolute z-30 -translate-x-0.5 -translate-y-0.5"
-          >
-            <span className="absolute -left-2 -top-2 h-6 w-6 animate-ping rounded-full bg-brand/45" />
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              className="relative h-5 w-5 drop-shadow-[0_3px_6px_rgba(0,0,0,0.5)]"
-            >
-              <path
-                d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
-                fill="#ffffff"
-                stroke="#0f172a"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        )}
+        {tourCursorEl}
       </>
     );
   };
@@ -454,7 +481,7 @@ export default function InteractiveShowcase({
                       : activeView.label}
                   </div>
                   <span className="hidden text-[10px] font-medium text-brand sm:inline">
-                    {activeView.isMapMock ? "Interactive" : isVideo ? "WebM Loop" : "16:10"}
+                    {isVideo ? "Live Loop" : "16:10"}
                   </span>
                 </div>
 

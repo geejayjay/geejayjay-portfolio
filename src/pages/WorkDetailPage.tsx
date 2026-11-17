@@ -322,12 +322,19 @@ export default function WorkDetailPage() {
                     <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950/5">
                       {isVideoAsset(shot.file, shot.mediaType) ? (
                         <video
+                          ref={(el) => {
+                            if (el) {
+                              el.muted = true;
+                              el.defaultMuted = true;
+                              if (el.paused) el.play().catch(() => {});
+                            }
+                          }}
                           src={shot.file}
-                          poster={shot.poster}
                           autoPlay
                           loop
                           muted
                           playsInline
+                          preload="auto"
                           className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (

@@ -17,7 +17,9 @@ type ReelScene = {
   poster?: string;
   hasAreasHover?: boolean;
   pinWebNavbar?: boolean;
+  navbarAsset?: string;
   pinAdminChrome?: boolean;
+  cursorWaypoints?: { x: number; y: number }[];
   durationMs: number;
 };
 
@@ -28,24 +30,25 @@ const SCENES: ReelScene[] = [
     type: "scroll",
     hasAreasHover: true,
     pinWebNavbar: true,
+    navbarAsset: "/works/experience-east-asean/navbar-desktop.webp",
     src: "/works/experience-east-asean/web-home-desktop.webp",
-    durationMs: 9000,
+    durationMs: 11000,
   },
   {
     label: "Connectivity Map",
     url: "experienceeastasean.com/connectivity-map",
     type: "video",
-    src: "/works/experience-east-asean/loops/connectivity-map.webm",
-    poster: "/works/experience-east-asean/web-connectivity-map.webp",
-    durationMs: 6400,
+    src: "/works/experience-east-asean/new/connectivity-map.mp4",
+    poster: "/works/experience-east-asean/new/connectivity-map-poster.webp",
+    durationMs: 14400,
   },
   {
     label: "3D Flipbook Viewer",
     url: "experienceeastasean.com/resources",
     type: "video",
-    src: "/works/experience-east-asean/loops/flipbook-demo.webm",
-    poster: "/works/experience-east-asean/details/feature-flipbook-viewer.webp",
-    durationMs: 5000,
+    src: "/works/experience-east-asean/new/flipbook-demo.mp4",
+    poster: "/works/experience-east-asean/new/flipbook-demo-poster.webp",
+    durationMs: 12400,
   },
   {
     label: "Admin CMS",
@@ -70,6 +73,7 @@ export default function FeaturedGalleryStage({
   const [sceneIdx, setSceneIdx] = useState(0);
   const [areaIdx, setAreaIdx] = useState(0);
   const [areasVisible, setAreasVisible] = useState(false);
+  const [videoCursorIdx, setVideoCursorIdx] = useState(0);
   const [hasEntered, setHasEntered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -80,6 +84,8 @@ export default function FeaturedGalleryStage({
   const dVideoRef = useRef<HTMLVideoElement>(null);
   const mScreenRef = useRef<HTMLDivElement>(null);
   const mImgRef = useRef<HTMLImageElement>(null);
+  const dNavRef = useRef<HTMLDivElement>(null);
+  const mNavRef = useRef<HTMLDivElement>(null);
   const reelBarRef = useRef<HTMLDivElement>(null);
 
   const idxRef = useRef(0);
@@ -116,6 +122,8 @@ export default function FeaturedGalleryStage({
     const s = SCENES[sceneIdx];
     if (!s) return;
     if (s.type === "video" && dVideoRef.current) {
+      dVideoRef.current.muted = true;
+      dVideoRef.current.defaultMuted = true;
       dVideoRef.current.currentTime = 0;
       if (!pausedRef.current) {
         dVideoRef.current.play().catch(() => {});
@@ -146,21 +154,22 @@ export default function FeaturedGalleryStage({
         if (s.type === "scroll" && dImgRef.current && dScreenRef.current && dScrollStageRef.current) {
           let scrollT = t;
           if (s.hasAreasHover) {
-            if (t < 0.18) {
-              scrollT = t;
+            // The Areas map sits at ~12-22% of the page: ease down to it, linger
+            // while the hover states cycle, then carry on to the footer.
+            if (t < 0.14) {
+              scrollT = (t / 0.14) * 0.12;
               setAreasVisible(false);
-            } else if (t <= 0.44) {
-              // Scroll at ~0.85x usual speed over the Areas band while cycling the 4 hover states
-              scrollT = 0.18 + ((t - 0.18) / 0.26) * 0.22;
+            } else if (t <= 0.42) {
+              scrollT = 0.12 + ((t - 0.14) / 0.28) * 0.104;
               setAreasVisible(true);
               const nextAreaIdx = Math.min(
                 AREA_STATES.length - 1,
-                Math.floor(((t - 0.18) / 0.26) * AREA_STATES.length),
+                Math.floor(((t - 0.14) / 0.28) * AREA_STATES.length),
               );
               setAreaIdx(nextAreaIdx);
             } else {
               setAreasVisible(false);
-              scrollT = 0.40 + ((t - 0.44) / 0.56) * 0.60;
+              scrollT = 0.224 + ((t - 0.42) / 0.58) * 0.776;
             }
           } else {
             setAreasVisible(false);
@@ -169,8 +178,14 @@ export default function FeaturedGalleryStage({
           const dMax = Math.max(0, dImgRef.current.offsetHeight - dScreenRef.current.clientHeight);
           const dY = -Math.round(scrollT * dMax);
           dScrollStageRef.current.style.transform = `translate3d(0, ${dY}px, 0)`;
+          if (dNavRef.current) dNavRef.current.style.opacity = dY < 0 ? "1" : "0";
         } else {
           setAreasVisible(false);
+          if (s.cursorWaypoints && s.cursorWaypoints.length > 0) {
+            setVideoCursorIdx(
+              Math.min(s.cursorWaypoints.length - 1, Math.floor(t * s.cursorWaypoints.length)),
+            );
+          }
         }
 
         // Synced continuous mobile scroll
@@ -179,6 +194,7 @@ export default function FeaturedGalleryStage({
           const mMax = Math.max(0, mImgRef.current.offsetHeight - mScreenRef.current.clientHeight);
           const mY = -Math.round(globalT * mMax);
           mImgRef.current.style.transform = `translate3d(0, ${mY}px, 0)`;
+          if (mNavRef.current) mNavRef.current.style.opacity = mY < 0 ? "1" : "0";
         }
 
         if (reelBarRef.current) {
@@ -203,14 +219,6 @@ export default function FeaturedGalleryStage({
   return (
     <div
       ref={stageRef}
-      onMouseEnter={() => {
-        pausedRef.current = true;
-        if (SCENES[idxRef.current].type === "video") dVideoRef.current?.pause();
-      }}
-      onMouseLeave={() => {
-        pausedRef.current = false;
-        if (SCENES[idxRef.current].type === "video") dVideoRef.current?.play().catch(() => {});
-      }}
       className={cn(
         "relative overflow-hidden select-none",
         compact ? "h-[240px] px-4 pt-4" : "h-[310px] sm:h-[340px] px-5 pt-5",
@@ -278,18 +286,59 @@ export default function FeaturedGalleryStage({
           {hasEntered && (
             <>
               {scene.type === "video" ? (
-                <video
-                  ref={dVideoRef}
-                  key={scene.src}
-                  src={scene.src}
-                  poster={scene.poster}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="metadata"
-                  className="block h-full w-full object-cover object-center"
-                />
+                <>
+                  <video
+                    ref={(el) => {
+                      dVideoRef.current = el;
+                      if (el) {
+                        el.muted = true;
+                        el.defaultMuted = true;
+                        if (el.paused) el.play().catch(() => {});
+                      }
+                    }}
+                    key={scene.src}
+                    src={scene.src}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    onCanPlay={(e) => {
+                      const v = e.currentTarget;
+                      v.muted = true;
+                      v.defaultMuted = true;
+                      if (v.paused) v.play().catch(() => {});
+                    }}
+                    className="block h-full w-full object-cover object-center"
+                  />
+                  {scene.cursorWaypoints && scene.cursorWaypoints.length > 0 && (
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        left: `${scene.cursorWaypoints[videoCursorIdx % scene.cursorWaypoints.length].x}%`,
+                        top: `${scene.cursorWaypoints[videoCursorIdx % scene.cursorWaypoints.length].y}%`,
+                        transition:
+                          "left 0.65s cubic-bezier(0.22, 1, 0.36, 1), top 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
+                      }}
+                      className="pointer-events-none absolute z-20 -translate-x-0.5 -translate-y-0.5"
+                    >
+                      <span className="absolute -left-1.5 -top-1.5 h-5 w-5 animate-ping rounded-full bg-brand/45" />
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="relative h-4 w-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                      >
+                        <path
+                          d="M4 2L20 12.5L12.5 14.5L9 21.5L4 2Z"
+                          fill="#ffffff"
+                          stroke="#0f172a"
+                          strokeWidth="1.8"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div ref={dScrollStageRef} className="relative w-full will-change-transform">
                   <img
@@ -302,7 +351,7 @@ export default function FeaturedGalleryStage({
                   {scene.hasAreasHover && (
                     <div
                       className={cn(
-                        "pointer-events-none absolute left-[11.46%] top-[23.79%] h-[12.06%] w-[77.08%] transition-opacity duration-200",
+                        "pointer-events-none absolute left-[11.25%] top-[17.196%] h-[8.495%] w-[77.613%] transition-opacity duration-200",
                         areasVisible ? "opacity-100" : "opacity-0",
                       )}
                     >
@@ -341,13 +390,16 @@ export default function FeaturedGalleryStage({
                 </div>
               )}
 
-              {/* Pinned Public Web Navbar */}
-              {scene.pinWebNavbar && (
+              {/* Pinned public header: fades in once the page scrolls, as on the live site */}
+              {scene.pinWebNavbar && scene.navbarAsset && (
                 <div
+                  ref={dNavRef}
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-0 top-0 z-10 h-0 w-full overflow-hidden pb-[4.44%] shadow-[0_4px_14px_rgba(0,0,0,0.22)]"
+                  style={{ opacity: 0 }}
+                  className="pointer-events-none absolute left-0 top-0 z-10 w-full transition-opacity duration-300"
                 >
-                  <img src={scene.src} alt="" decoding="async" className="block h-auto w-full" />
+                  <div className="absolute inset-0 bg-[#134e4a]/80 shadow-md backdrop-blur-lg" />
+                  <img src={scene.navbarAsset} alt="" decoding="async" className="relative block h-auto w-full" />
                 </div>
               )}
 
@@ -362,13 +414,14 @@ export default function FeaturedGalleryStage({
                   </div>
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[15.6%] overflow-hidden bg-[#0f172a]"
+                    className="pointer-events-none absolute bottom-0 left-0 top-0 z-20 w-[16.5625%] overflow-hidden border-r border-[#0d1826] bg-[#111727]"
                   >
+                    <img src="/works/experience-east-asean/admin/sidebar-dashboard.webp" alt="" decoding="async" className="block h-auto w-full" />
                     <img
-                      src={scene.src}
+                      src="/works/experience-east-asean/admin/sidebar-footer.webp"
                       alt=""
                       decoding="async"
-                      className="block h-auto w-[641.03%] max-w-none"
+                      className="absolute bottom-0 left-0 block h-auto w-full"
                     />
                   </div>
                 </>
@@ -389,15 +442,31 @@ export default function FeaturedGalleryStage({
         )}
       >
         <div className="absolute left-1/2 top-1.5 z-10 h-2 w-9 -translate-x-1/2 rounded-full bg-slate-950" />
-        <div ref={mScreenRef} className="h-full w-full overflow-hidden">
+        <div ref={mScreenRef} className="relative h-full w-full overflow-hidden">
           {hasEntered && (
-            <img
-              ref={mImgRef}
-              src="/works/experience-east-asean/web-home-mobile.webp"
-              alt="Experience East ASEAN Mobile"
-              decoding="async"
-              className="block h-auto w-full will-change-transform"
-            />
+            <>
+              <img
+                ref={mImgRef}
+                src="/works/experience-east-asean/web-home-mobile.webp"
+                alt="Experience East ASEAN Mobile"
+                decoding="async"
+                className="block h-auto w-full will-change-transform"
+              />
+              <div
+                ref={mNavRef}
+                aria-hidden="true"
+                style={{ opacity: 0 }}
+                className="pointer-events-none absolute left-0 top-0 z-10 w-full transition-opacity duration-300"
+              >
+                <div className="absolute inset-0 bg-[#134e4a]/80 backdrop-blur-lg" />
+                <img
+                  src="/works/experience-east-asean/navbar-mobile.webp"
+                  alt=""
+                  decoding="async"
+                  className="relative block h-auto w-full"
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
